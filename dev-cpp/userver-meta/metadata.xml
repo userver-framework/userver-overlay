@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>imamail@bk.ru</email>
+  </maintainer>
+
+  <longdescription lang="en">
+    Production-ready C++ Asynchronous Framework with rich functionality	
+  </longdescription>
+
+  <use>
+    <flag name="grpc">Provide asynchronous driver for gRPC</flag>
+    <flag name="redis">Provide asynchronous driver for Redis</flag>
+    <flag name="mongodb">Provide asynchronous driver for MongoDB</flag>
+    <flag name="rabbitmq">Provide asynchronous driver for RabbitMQ (AMQP 0-9-1)</flag>
+    <flag name="kafka">Provide asynchronous driver for Apache Kafka</flag>
+    <flag name="utest">Provide utest and ubench for unit testing and benchmarking coroutines</flag>
+    <flag name="rocksdb">Provide asynchronous driver for RocksDB</flag>
+  </use>
+</pkgmetadata>
