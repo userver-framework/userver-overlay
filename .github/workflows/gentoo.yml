@@ -1,32 +1,48 @@
-# This is a basic workflow to help you get started with Actions
+name: Ebuild Tests
 
-name: Gentoo ebuild test
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - '**'
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.github/**'
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
 jobs:
-  ebuild-userver-test:
+  tests:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    # Check out the repository
+    - uses: actions/checkout@master
 
-      - name: src prepare
-        run: |
-          mkdir -p "${GITHUB_WORKSPACE}/distfiles"
-          mkdir -p "${GITHUB_WORKSPACE}/packages"
+    # Prepare the environment
+    - name: Prepare
+      id: prepare
+      run: |
+        echo "::set-output name=datetime::$(date +"%Y%m%d%H%M")"
+        echo "::set-output name=workspace::${GITHUB_WORKSPACE}"
+        mkdir -p "${GITHUB_WORKSPACE}/distfiles" "${GITHUB_WORKSPACE}/binpkgs"
 
-      - name: ebuild test
-        uses: hacking-gentoo/action-ebuild-test@v1
-        with:
-          package: dev-cpp/userver
-          version: "2.13"
+    # Cache distfiles and binary packages
+    - name: Cache distfiles
+      id: cache-distfiles
+      uses: gerbal/always-cache@v1.0.3
+      with:
+        path: ${{ steps.prepare.outputs.workspace }}/distfiles
+        key: distfiles-${{ steps.prepare.outputs.datetime }}
+        restore-keys: |
+          distfiles-${{ steps.prepare.outputs.datetime }}
+          distfiles
+    - name: Cache binpkgs
+      id: cache-binpkgs
+      uses: gerbal/always-cache@v1.0.3
+      with:
+        path: ${{ steps.prepare.outputs.workspace }}/binpkgs
+        key: binpkgs-${{ steps.prepare.outputs.datetime }}
+        restore-keys: |
+          binpkgs-${{ steps.prepare.outputs.datetime }}
+          binpkgs
+
+    # Run the ebuild tests
+    - uses: hacking-gentoo/action-ebuild-test@v1
