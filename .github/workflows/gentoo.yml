@@ -19,7 +19,7 @@ jobs:
       
       - name: Build Gentoo image
         run: |
-          docker build -t gentoo-systemd -f docker/gentoo/systemd.Dockerfile .
+          docker build --no-cache -t gentoo-systemd -f docker/gentoo/systemd.Dockerfile .
       
       - name: Run container and install package
         run: |
