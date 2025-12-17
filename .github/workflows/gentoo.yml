@@ -13,7 +13,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
 #      - name: Set up Buildx
 #        uses: docker/setup-buildx-action@v3
       
@@ -28,14 +27,17 @@ jobs:
           sleep 15
           echo "Container status:"
           docker ps | grep gentoo-test
-          docker exec gentoo-test bash -lc "emerge -v app-eselect/eselect-repository && \
-            eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git && \
-            emaint -a sync >/dev/null 2>&1 || true && \
-            USE='postgres redis mongodb mysql rabbitmq kafka utest testsuite easy' emerge -v dev-cpp/userver && \
-            if emerge -pv dev-cpp/userver >/dev/null 2>&1; then \
-              echo 'TEST PASSED: dev-cpp/userver was installed'; exit 0; \
-            else \
-              echo 'TEST FAILED: dev-cpp/userver was not installed'; exit 1; \
+          docker exec gentoo-test bash -lc "emerge -v app-eselect/eselect-repository && 
+            eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git && 
+            emaint -a sync >/dev/null 2>&1 || true && 
+            echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf && 
+            mkdir -p /etc/portage/package.license && 
+            echo 'dev-db/mongodb SSPL-1' >> /etc/portage/package.license/mongodb && 
+            USE='postgres redis mongodb mysql rabbitmq kafka utest testsuite easy' emerge -v --autounmask-write --autounmask-continue dev-cpp/userver && 
+            if emerge -pv dev-cpp/userver >/dev/null 2>&1; then 
+              echo 'TEST PASSED: dev-cpp/userver was installed'; exit 0; 
+            else 
+              echo 'TEST FAILED: dev-cpp/userver was not installed'; exit 1; 
             fi"
       
       - name: Cleanup
