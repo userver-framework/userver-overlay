@@ -10,7 +10,6 @@ RUN emerge -v app-portage/eselect-repository
     && eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git 
     && emaint -a sync >/dev/null 2>&1 || true
 
-VOLUME ["/overlay"]
 VOLUME ["/sys/fs/cgroup"]
 
 CMD ["/sbin/init"]
