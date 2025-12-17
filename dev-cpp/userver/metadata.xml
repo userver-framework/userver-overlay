@@ -15,7 +15,7 @@
     <flag name="rabbitmq">Provide asynchronous driver for RabbitMQ (AMQP 0-9-1)</flag>
     <flag name="kafka">Provide asynchronous driver for Apache Kafka</flag>
     <flag name="utest">Provide utest and ubench for unit testing and benchmarking coroutines</flag>
-    <flag name="testsute">Enable functional tests via testsuite</flag>
+    <flag name="testsuite">Enable functional tests via testsuite</flag>
     <flag name="easy">Build easy HTTP server library</flag>
   </use>
 </pkgmetadata>
