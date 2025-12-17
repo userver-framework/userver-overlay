@@ -1,0 +1,40 @@
+name: Gentoo Systemd with Overlay CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  gentoo-ci:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Gentoo image
+        run: |
+          docker build -t gentoo-systemd -f docker/gentoo/systemd.Dockerfile .
+      
+      - name: Run container and install package
+        run: |
+          docker run --privileged -d --name gentoo-test gentoo-systemd
+          docker exec gentoo-test bash -lc "
+            USE='postgres redis mongodb mysql rabbitmq kafka utest testsute easy' emerge -v dev-cpp/userver && 
+            if emerge -pv dev-cpp/userver >/dev/null 2>&1; then
+              echo 'TEST PASSED: dev-cpp/userver was installed'; exit 0;
+            else
+              echo 'TEST FAILED: dev-cpp/userver was not installed'; exit 1;
+            fi
+          "
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f gentoo-test || true
+          docker rmi gentoo-systemd || true
