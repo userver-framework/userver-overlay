@@ -25,6 +25,7 @@ jobs:
         run: |
           docker run --privileged -d --name gentoo-test gentoo-systemd
           docker exec gentoo-test bash -lc "
+          emerge -v app-eselect/eselect-repository && eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git && emaint -a sync >/dev/null 2>&1 || true
             USE='postgres redis mongodb mysql rabbitmq kafka utest testsute easy' emerge -v dev-cpp/userver && 
             if emerge -pv dev-cpp/userver >/dev/null 2>&1; then
               echo 'TEST PASSED: dev-cpp/userver was installed'; exit 0;
