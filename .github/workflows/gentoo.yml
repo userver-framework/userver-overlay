@@ -46,3 +46,6 @@ jobs:
 
     # Run the ebuild tests
     - uses: hacking-gentoo/action-ebuild-test@v1
+      with:
+        overlay_repo:
+          userver-framework/userver-overlay
