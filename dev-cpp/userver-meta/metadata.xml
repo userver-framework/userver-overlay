@@ -17,5 +17,6 @@
     <flag name="kafka">Provide asynchronous driver for Apache Kafka</flag>
     <flag name="utest">Provide utest and ubench for unit testing and benchmarking coroutines</flag>
     <flag name="rocksdb">Provide asynchronous driver for RocksDB</flag>
+    <flag name="sqlite">Provide asynchronous driver for SQLite</flag>
   </use>
 </pkgmetadata>
