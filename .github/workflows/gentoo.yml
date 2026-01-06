@@ -49,21 +49,21 @@ jobs:
             echo "dev-cpp/userver postgres redis mongodb mysql rabbitmq kafka sqlite utest testsuite easy odbc uboost-coro" \
               > /etc/portage/package.use/userver
 
-            echo "dev-libs/cyrus-sasl static-libs"        >> /etc/portage/package.use/userver-deps
-            echo "dev-db/unixODBC static-libs"            >> /etc/portage/package.use/userver-deps
-            echo "dev-lang/python ssl"                    >> /etc/portage/package.use/userver-deps
-            echo "dev-libs/crypto++ static-libs"          >> /etc/portage/package.use/userver-deps
-            echo "dev-libs/libbson static-libs"           >> /etc/portage/package.use/userver-deps
-            echo "dev-libs/libev static-libs"             >> /etc/portage/package.use/userver-deps
-            echo "dev-libs/openssl static-libs"           >> /etc/portage/package.use/userver-deps
-            echo "net-dns/c-ares static-libs"             >> /etc/portage/package.use/userver-deps
-            echo "net-misc/curl static-libs"              >> /etc/portage/package.use/userver-deps
-            echo "net-nds/openldap static-libs"           >> /etc/portage/package.use/userver-deps
-            echo "sys-libs/zlib static-libs"              >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/cyrus-sasl static-libs"     >> /etc/portage/package.use/userver-deps
+            echo "dev-db/unixODBC static-libs"         >> /etc/portage/package.use/userver-deps
+            echo "dev-lang/python ssl"                 >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/crypto++ static-libs"       >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/libbson static-libs"        >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/libev static-libs"          >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/openssl static-libs"        >> /etc/portage/package.use/userver-deps
+            echo "net-dns/c-ares static-libs"          >> /etc/portage/package.use/userver-deps
+            echo "net-misc/curl static-libs"           >> /etc/portage/package.use/userver-deps
+            echo "net-nds/openldap static-libs"        >> /etc/portage/package.use/userver-deps
+            echo "sys-libs/zlib static-libs"           >> /etc/portage/package.use/userver-deps
 
-            echo "dev-db/postgresql static-libs"          >> /etc/portage/package.use/userver-deps
-            echo "dev-libs/hiredis static-libs"           >> /etc/portage/package.use/userver-deps
-            echo "dev-libs/mongo-c-driver static-libs"    >> /etc/portage/package.use/userver-deps
+            echo "dev-db/postgresql static-libs"       >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/hiredis static-libs"        >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/mongo-c-driver static-libs" >> /etc/portage/package.use/userver-deps
           '
 
       # ---------- Base tools needed for overlay ----------
@@ -86,7 +86,8 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             rm -rf /var/db/repos/userver-framework
-            git clone --depth=1 https://github.com/userver-framework/userver-overlay.git /var/db/repos/userver-framework
+            git clone --depth=1 https://github.com/userver-framework/userver-overlay.git \
+              /var/db/repos/userver-framework
           '
 
       # ---------- Base toolchain ----------
@@ -109,9 +110,15 @@ jobs:
             emerge -v dev-db/postgresql
           '
 
-      - name: Build MongoDB
+      - name: Build MongoDB (accept SSPL-1 license safely)
         run: |
           docker exec gentoo-test bash -lc '
+            if [ -d /etc/portage/package.license ]; then
+              echo "dev-db/mongodb SSPL-1" > /etc/portage/package.license/mongodb
+            else
+              echo "dev-db/mongodb SSPL-1" >> /etc/portage/package.license
+            fi
+
             FEATURES="-sandbox -ipc-sandbox -network-sandbox" emerge -v dev-db/mongodb
           '
 
