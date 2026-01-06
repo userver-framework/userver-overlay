@@ -39,6 +39,14 @@ jobs:
             emerge-webrsync
           '
 
+      # ---------- Base tools (git нужен для overlay) ----------
+
+      - name: Install git
+        run: |
+          docker exec gentoo-test bash -lc '
+            emerge -v dev-vcs/git
+          '
+
       # ---------- Overlay ----------
 
       - name: Register userver overlay
@@ -93,7 +101,6 @@ jobs:
               sys-devel/clang \
               dev-build/cmake \
               dev-build/ninja \
-              dev-vcs/git \
               dev-util/ccache
           '
 
