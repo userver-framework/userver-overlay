@@ -122,3 +122,37 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             emerge -v dev-db/redis
+          '
+
+      - name: Build MariaDB
+        run: |
+          docker exec gentoo-test bash -lc '
+            emerge -v dev-db/mariadb
+          '
+
+      - name: Build RabbitMQ dependency
+        run: |
+          docker exec gentoo-test bash -lc '
+            emerge -v dev-cpp/amqp-cpp
+          '
+
+      - name: Build Kafka dependency
+        run: |
+          docker exec gentoo-test bash -lc '
+            emerge -v dev-libs/librdkafka
+          '
+
+      # ---------- userver ----------
+
+      - name: Build userver
+        run: |
+          docker exec gentoo-test bash -lc '
+            emerge -v dev-cpp/userver
+          '
+
+      - name: Debug info
+        if: always()
+        run: |
+          docker exec gentoo-test bash -lc '
+            emerge -pv dev-cpp/userver
+          '
