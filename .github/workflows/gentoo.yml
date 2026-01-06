@@ -39,12 +39,12 @@ jobs:
             emerge-webrsync
           '
 
-      # ---------- Base tools (git нужен для overlay) ----------
+      # ---------- Base tools needed for overlay ----------
 
-      - name: Install git
+      - name: Install eselect-repository and git
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -v dev-vcs/git
+            emerge -v app-eselect/eselect-repository dev-vcs/git
           '
 
       # ---------- Overlay ----------
@@ -122,37 +122,3 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             emerge -v dev-db/redis
-          '
-
-      - name: Build MariaDB
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-db/mariadb
-          '
-
-      - name: Build RabbitMQ dependency
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-cpp/amqp-cpp
-          '
-
-      - name: Build Kafka dependency
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-libs/librdkafka
-          '
-
-      # ---------- userver ----------
-
-      - name: Build userver
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-cpp/userver
-          '
-
-      - name: Debug info
-        if: always()
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -pv dev-cpp/userver
-          '
