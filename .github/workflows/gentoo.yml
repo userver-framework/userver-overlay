@@ -51,8 +51,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             rm -rf /var/db/repos/userver-framework
-            git clone --depth=1 https://github.com/userver-framework/userver-overlay.git \
-              /var/db/repos/userver-framework
+            git clone --depth=1 https://github.com/userver-framework/userver-overlay.git /var/db/repos/userver-framework
           '
 
       # ---------- USE flags ----------
@@ -62,29 +61,27 @@ jobs:
           docker exec gentoo-test bash -lc '
             mkdir -p /etc/portage/package.use
 
-            # userver: все реальные IUSE в одной строке
             cat > /etc/portage/package.use/userver << "EOF"
-dev-cpp/userver postgres redis mongodb mysql rabbitmq kafka sqlite utest testsuite easy odbc uboost-coro
-EOF
+            dev-cpp/userver postgres redis mongodb mysql rabbitmq kafka sqlite utest testsuite easy odbc uboost-coro
+            EOF
 
-            # dependency USE flags, которые userver требует от зависимостей
             cat > /etc/portage/package.use/userver-deps << "EOF"
-dev-libs/cyrus-sasl static-libs
-dev-db/unixODBC static-libs
-dev-lang/python ssl
-dev-libs/crypto++ static-libs
-dev-libs/libbson static-libs
-dev-libs/libev static-libs
-dev-libs/openssl static-libs
-net-dns/c-ares static-libs
-net-misc/curl static-libs
-net-nds/openldap static-libs
-sys-libs/zlib static-libs
+            dev-libs/cyrus-sasl static-libs
+            dev-db/unixODBC static-libs
+            dev-lang/python ssl
+            dev-libs/crypto++ static-libs
+            dev-libs/libbson static-libs
+            dev-libs/libev static-libs
+            dev-libs/openssl static-libs
+            net-dns/c-ares static-libs
+            net-misc/curl static-libs
+            net-nds/openldap static-libs
+            sys-libs/zlib static-libs
 
-dev-db/postgresql static-libs
-dev-libs/hiredis static-libs
-dev-libs/mongo-c-driver static-libs
-EOF
+            dev-db/postgresql static-libs
+            dev-libs/hiredis static-libs
+            dev-libs/mongo-c-driver static-libs
+            EOF
           '
 
       # ---------- Base toolchain ----------
@@ -152,4 +149,3 @@ EOF
           docker exec gentoo-test bash -lc '
             emerge -pv dev-cpp/userver
           '
-
