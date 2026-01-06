@@ -98,7 +98,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             emerge -v \
-              sys-devel/clang \
+              llvm-core/clang \
               dev-build/cmake \
               dev-build/ninja \
               dev-util/ccache
