@@ -98,7 +98,7 @@ jobs:
       - name: Install LLVM toolchain from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -vk llvm-core/llvm llvm-core/clang dev-build/cmake dev-build/ninja dev-util/ccache dev-lang/go
+            emerge -vk llvm-core/llvm llvm-core/clang dev-build/cmake dev-build/ninja dev-util/ccache dev-lang/go dev-libs/boost
           '
 
       - name: Install heavy deps from binpkg
