@@ -74,6 +74,7 @@ jobs:
             echo "dev-libs/mongo-c-driver static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-db/postgresql static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-db/unixODBC static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/jemalloc stats" >> /etc/portage/package.use/userver-deps
           '
 
       # ---------- Base tools ----------
@@ -97,7 +98,7 @@ jobs:
       - name: Install LLVM toolchain from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -vk llvm-core/llvm llvm-core/clang dev-build/cmake dev-build/ninja dev-util/ccache
+            emerge -vk llvm-core/llvm llvm-core/clang dev-build/cmake dev-build/ninja dev-util/ccache dev-lang/go
           '
 
       - name: Install heavy deps from binpkg
