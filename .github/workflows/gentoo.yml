@@ -109,10 +109,10 @@ jobs:
             emerge -vk dev-db/postgresql dev-db/mongodb dev-db/redis dev-db/mariadb dev-cpp/amqp-cpp dev-libs/librdkafka
           '
 
-      - name: Install userver from binpkg
+      - name: Install userver
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -vk dev-cpp/userver
+            emerge -v dev-cpp/userver
           '
 
       # ---------- Build, test and smoke-test userver ----------
