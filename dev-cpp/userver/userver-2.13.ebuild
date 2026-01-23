@@ -125,9 +125,9 @@ IUSE="postgres redis mongodb mysql rabbitmq kafka utest testsuite easy"
 #	"opentelemetry? (grpc)"
 #	)
 
-#RDEPEND="!dev-cpp/userver-meta dev-libs/cyrus-sasl[static-libs] dev-libs/protobuf app-crypt/mit-krb5 dev-libs/boost dev-cpp/yaml-cpp dev-debug/gdb dev-db/unixODBC[static-libs] dev-lang/python[ssl] dev-libs/crypto++[static-libs] dev-libs/jemalloc dev-libs/libbson[static-libs] dev-libs/libev[static-libs] dev-libs/libfmt dev-libs/openssl[static-libs] dev-libs/pugixml dev-libs/re2 dev-python/pip dev-python/voluptuous dev-util/ccache dev-build/cmake dev-build/ninja dev-vcs/git llvm-core/clang net-dns/c-ares[static-libs] net-libs/nghttp2 net-misc/curl[static-libs] net-nds/openldap[static-libs] sys-libs/zlib[static-libs] grpc? ( net-libs/grpc ) postgres? ( dev-db/postgresql[static-libs] ) redis? ( dev-db/redis dev-libs/hiredis[static-libs] ) mongodb? ( dev-db/mongodb dev-libs/mongo-c-driver[static-libs] ) mysql? ( dev-db/mariadb ) rabbitmq? ( dev-cpp/amqp-cpp ) kafka? ( dev-libs/librdkafka ) rocksdb? ( dev-libs/rocksdb[static-libs] ) utest? ( dev-cpp/gtest dev-cpp/benchmark )"
+#RDEPEND="!dev-cpp/userver-meta dev-util/ruff dev-libs/cyrus-sasl[static-libs] dev-libs/protobuf app-crypt/mit-krb5 dev-libs/boost dev-cpp/yaml-cpp dev-debug/gdb dev-db/unixODBC[static-libs] dev-lang/python[ssl] dev-libs/crypto++[static-libs] dev-libs/jemalloc dev-libs/libbson[static-libs] dev-libs/libev[static-libs] dev-libs/libfmt dev-libs/openssl[static-libs] dev-libs/pugixml dev-libs/re2 dev-python/pip dev-python/voluptuous dev-util/ccache dev-build/cmake dev-build/ninja dev-vcs/git llvm-core/clang net-dns/c-ares[static-libs] net-libs/nghttp2 net-misc/curl[static-libs] net-nds/openldap[static-libs] sys-libs/zlib[static-libs] grpc? ( net-libs/grpc ) postgres? ( dev-db/postgresql[static-libs] ) redis? ( dev-db/redis dev-libs/hiredis[static-libs] ) mongodb? ( dev-db/mongodb dev-libs/mongo-c-driver[static-libs] ) mysql? ( dev-db/mariadb ) rabbitmq? ( dev-cpp/amqp-cpp ) kafka? ( dev-libs/librdkafka ) rocksdb? ( dev-libs/rocksdb[static-libs] ) utest? ( dev-cpp/gtest dev-cpp/benchmark )"
 
-RDEPEND="!dev-cpp/userver-meta dev-libs/cyrus-sasl[static-libs] dev-libs/protobuf app-crypt/mit-krb5 dev-libs/boost dev-cpp/yaml-cpp dev-debug/gdb dev-db/unixODBC[static-libs] dev-lang/python[ssl] dev-libs/crypto++[static-libs] dev-libs/jemalloc dev-libs/libbson[static-libs] dev-libs/libev[static-libs] dev-libs/libfmt dev-libs/openssl[static-libs] dev-libs/pugixml dev-libs/re2 dev-python/pip dev-python/voluptuous dev-util/ccache dev-build/cmake dev-build/ninja dev-vcs/git llvm-core/clang net-dns/c-ares[static-libs] net-libs/nghttp2 net-misc/curl[static-libs] net-nds/openldap[static-libs] sys-libs/zlib[static-libs] postgres? ( dev-db/postgresql[static-libs] ) redis? ( dev-db/redis dev-libs/hiredis[static-libs] ) mongodb? ( dev-db/mongodb dev-libs/mongo-c-driver[static-libs] ) mysql? ( dev-db/mariadb ) rabbitmq? ( dev-cpp/amqp-cpp ) kafka? ( dev-libs/librdkafka ) utest? ( dev-cpp/gtest dev-cpp/benchmark )"
+RDEPEND="!dev-cpp/userver-meta dev-util/ruff dev-libs/cyrus-sasl[static-libs] dev-libs/protobuf app-crypt/mit-krb5 dev-libs/boost dev-cpp/yaml-cpp dev-debug/gdb dev-db/unixODBC[static-libs] dev-lang/python[ssl] dev-libs/crypto++[static-libs] dev-libs/jemalloc dev-libs/libbson[static-libs] dev-libs/libev[static-libs] dev-libs/libfmt dev-libs/openssl[static-libs] dev-libs/pugixml dev-libs/re2 dev-python/pip dev-python/voluptuous dev-util/ccache dev-build/cmake dev-build/ninja dev-vcs/git llvm-core/clang net-dns/c-ares[static-libs] net-libs/nghttp2 net-misc/curl[static-libs] net-nds/openldap[static-libs] sys-libs/zlib[static-libs] postgres? ( dev-db/postgresql[static-libs] ) redis? ( dev-db/redis dev-libs/hiredis[static-libs] ) mongodb? ( dev-db/mongodb dev-libs/mongo-c-driver[static-libs] ) mysql? ( dev-db/mariadb ) rabbitmq? ( dev-cpp/amqp-cpp ) kafka? ( dev-libs/librdkafka ) utest? ( dev-cpp/gtest dev-cpp/benchmark )"
 
 DEPEND="${RDEPEND}"
 
@@ -177,9 +177,12 @@ src_compile() {
 }
 
 src_install() {
-	dodir /usr
-	cp -a "${S}/build_debug/." "${D}/usr" || die "unable to install"
-	cp -a "${S}/build_release/." "${D}/usr" || die "unable to install"
+        dodir /usr || die "unable to create temporary install directory"
+        dodir /userver || die "unable to create intermediate temporary install directory"
+        cmake --install "${S}/build_debug/" --prefix "${D}/userver" || die "unable to install to intermediate temporary directory"
+        cmake --install "${S}/build_release/" --prefix "${D}/userver" || die "unable to install to intermediate temporary directory"
+        cp -a "${D}/userver/." "${D}/usr" || die "unable to install"
+        rm -rf "${D}/userver"
 }
 
 pkg_postinst(){

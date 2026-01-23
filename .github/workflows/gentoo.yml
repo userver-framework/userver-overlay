@@ -1,4 +1,4 @@
-name: Gentoo Systemd with Overlay CI
+name: Gentoo Systemd CI with binpkg
 
 on:
   push:
@@ -11,49 +11,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Build Gentoo image
+      - name: Build Gentoo Docker image
         run: |
           docker build -t gentoo-systemd -f docker/gentoo/systemd.Dockerfile .
 
-      - name: Run Gentoo container (systemd)
+      - name: Start Gentoo container
         run: |
           docker run --privileged -d \
             --name gentoo-test \
             --cgroupns=host \
             -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
             gentoo-systemd /sbin/init
-
           echo "Waiting for systemd to initialize..."
           sleep 15
-          echo "Container status:"
           docker ps | grep gentoo-test
 
-      # ---------- Gentoo tree ----------
+      # ---------- DOWNLOAD & UNPACK BINPKGS ----------
 
-      - name: Sync gentoo tree (webrsync)
+      - name: Download and unpack prebuilt binpkg archive
         run: |
           docker exec gentoo-test bash -lc '
-            emerge-webrsync
+            set -e
+            mkdir -p /var/cache/binpkgs
+            cd /var/cache/binpkgs
+            wget -q -O packages.tar.zst "https://github.com/userver-framework/userver-gentoo-heavy-deps/releases/download/archive1/packages.tar.zst"
+            tar --zstd -xvf packages.tar.zst
+            rm -f packages.tar.zst
           '
 
-      # ---------- Overlay ----------
+      # ---------- Sync Gentoo tree ----------
 
-      - name: Register userver overlay
+      - name: Sync gentoo tree
         run: |
-          docker exec gentoo-test bash -lc '
-            eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git || true
-          '
-
-      - name: Clone userver overlay
-        run: |
-          docker exec gentoo-test bash -lc '
-            rm -rf /var/db/repos/userver-framework
-            git clone --depth=1 https://github.com/userver-framework/userver-overlay.git \
-              /var/db/repos/userver-framework
-          '
+          docker exec gentoo-test bash -lc 'emerge-webrsync'
 
       # ---------- USE flags ----------
 
@@ -62,94 +55,96 @@ jobs:
           docker exec gentoo-test bash -lc '
             mkdir -p /etc/portage/package.use
 
-            # userver: все реальные IUSE в одной строке
-            cat > /etc/portage/package.use/userver << "EOF"
-dev-cpp/userver postgres redis mongodb mysql rabbitmq kafka sqlite utest testsuite easy odbc uboost-coro
-EOF
+            # userver main package
+            echo "dev-cpp/userver postgres redis mongodb mysql rabbitmq kafka sqlite utest odbc" > /etc/portage/package.use/userver
 
-            # dependency USE flags, которые userver требует от зависимостей
-            cat > /etc/portage/package.use/userver-deps << "EOF"
-dev-libs/cyrus-sasl static-libs
-dev-db/unixODBC static-libs
-dev-lang/python ssl
-dev-libs/crypto++ static-libs
-dev-libs/libbson static-libs
-dev-libs/libev static-libs
-dev-libs/openssl static-libs
-net-dns/c-ares static-libs
-net-misc/curl static-libs
-net-nds/openldap static-libs
-sys-libs/zlib static-libs
-
-dev-db/postgresql static-libs
-dev-libs/hiredis static-libs
-dev-libs/mongo-c-driver static-libs
-EOF
+            # Dependencies with explicit USE flags only
+            echo "dev-libs/re2 icu" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/cyrus-sasl static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-lang/python ssl" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/crypto++ static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/libbson static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/libev static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/openssl static-libs" >> /etc/portage/package.use/userver-deps
+            echo "net-dns/c-ares static-libs" >> /etc/portage/package.use/userver-deps
+            echo "net-misc/curl static-libs" >> /etc/portage/package.use/userver-deps
+            echo "net-nds/openldap static-libs" >> /etc/portage/package.use/userver-deps
+            echo "sys-libs/zlib static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/hiredis static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-libs/mongo-c-driver static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-db/postgresql static-libs" >> /etc/portage/package.use/userver-deps
+            echo "dev-db/unixODBC static-libs" >> /etc/portage/package.use/userver-deps
           '
 
-      # ---------- Base toolchain ----------
+      # ---------- Base tools ----------
 
-      - name: Build base toolchain
+      - name: Install eselect-repository and git
+        run: |
+          docker exec gentoo-test bash -lc 'emerge -v app-eselect/eselect-repository dev-vcs/git'
+
+      # ---------- Overlay ----------
+
+      - name: Register and clone userver overlay
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -v \
-              sys-devel/clang \
-              dev-build/cmake \
-              dev-build/ninja \
-              dev-vcs/git \
-              dev-util/ccache
+            eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git || true
+            rm -rf /var/db/repos/userver-framework
+            git clone --depth=1 https://github.com/userver-framework/userver-overlay.git /var/db/repos/userver-framework
           '
 
-      # ---------- Heavy dependencies (1 package = 1 step) ----------
+      # ---------- Install from binpkg ----------
 
-      - name: Build PostgreSQL
+      - name: Install LLVM toolchain from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -v dev-db/postgresql
+            emerge -vk llvm-core/llvm llvm-core/clang dev-build/cmake dev-build/ninja dev-util/ccache
           '
 
-      - name: Build MongoDB
+      - name: Install heavy deps from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            FEATURES="-sandbox -ipc-sandbox -network-sandbox" emerge -v dev-db/mongodb
+            mkdir -p /etc/portage/package.license
+            echo "dev-db/mongodb SSPL-1" > /etc/portage/package.license/mongodb
+            emerge -vk dev-db/postgresql dev-db/mongodb dev-db/redis dev-db/mariadb dev-cpp/amqp-cpp dev-libs/librdkafka
           '
 
-      - name: Build Redis
+      - name: Install userver from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -v dev-db/redis
+            emerge -vk dev-cpp/userver
           '
 
-      - name: Build MariaDB
+      # ---------- Build, test and smoke-test userver ----------
+
+      - name: Build, test, and smoke-test userver service
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -v dev-db/mariadb
-          '
+            set -e
+            cd /root
+            userver-create-service myservice
+            cd myservice
 
-      - name: Build RabbitMQ dependency
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-cpp/amqp-cpp
-          '
+            echo ">>> Build and run tests"
+            make build-debug
+            make test-debug
 
-      - name: Build Kafka dependency
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-libs/librdkafka
-          '
+            echo ">>> Start service for smoke test"
+            make start-debug &
+            PID=$!
+            sleep 5
 
-      # ---------- userver ----------
+            echo ">>> Smoke test: check HTTP endpoint"
+            RESPONSE=$(curl -fs http://127.0.0.1:8080/hello?name=userver)
+            echo "Response: $RESPONSE"
+            if [ "$RESPONSE" != "Hello, userver!" ]; then
+              echo "ERROR: unexpected response"
+              exit 1
+            fi
 
-      - name: Build userver
-        run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-cpp/userver
+            kill $PID || true
           '
 
       - name: Debug info
         if: always()
         run: |
-          docker exec gentoo-test bash -lc '
-            emerge -pv dev-cpp/userver
-          '
-
+          docker exec gentoo-test bash -lc 'emerge -pv dev-cpp/userver'
