@@ -68,13 +68,11 @@ PYTHON_SDIST_LIBS=(
   "python-redis 0.4.0"
 )
 
-CPM_LIBS="main.zip"
-
-CPM_LIBS_TAR="userver_cpm_cache.tar.gz"
+CPM_LIBS="userver_cpm_cache_2.13.tar.gz"
 
 PATCH="e1e4a07a5d281fcd39281d3b95981b6ce6749db6.zip"
 
-SRC_URI="https://github.com/userver-framework/userver/archive/refs/tags/${MAIN_SRC} https://github.com/halfdarkangel/userver-cpm-cache/archive/refs/heads/${CPM_LIBS} https://gist.github.com/halfdarkangel/83f00a44f289e63c3bc7fe30d844d202/archive/${PATCH} https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+SRC_URI="https://github.com/userver-framework/userver/archive/refs/tags/${MAIN_SRC} https://github.com/halfdarkangel/userver-cpm-cache/releases/download/2.13/${CPM_LIBS} https://gist.github.com/halfdarkangel/83f00a44f289e63c3bc7fe30d844d202/archive/${PATCH} https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
 
 for dep in "${PYTHON_LIBS[@]}"; do
 	set -- ${dep}
@@ -136,18 +134,29 @@ DEPEND="${RDEPEND}"
 BDEPEND="app-arch/unzip"
 
 src_unpack(){
-	unpack "${DISTDIR}/${MAIN_SRC}" || die "unable to unpack source code"
-	cd "${S}" || die "unable to enter source code directory"
-	unzip -o -j "${DISTDIR}/${PATCH}" -d "${S}" || die "unable to unpack pq patch"
-	unzip -o -j "${DISTDIR}/${CPM_LIBS}" -d "${S}/third_party/" || die "unable to unpack cpm cache"
-	cd "${S}/third_party" || die "unable to enter third-party directory"
-	tar -xzf "${S}/third_party/${CPM_LIBS_TAR}" || die "unable to unpack cpm cache"
-	mkdir "wheelhouse" || die "unable to create directory for python packages"
-	for file in ${A}; do
-		if [[ ${file} != ${MAIN_SRC} ]] && [[ ${file} != ${CPM_LIBS} ]] && [[ ${file} != ${PATCH} ]]; then
-			cp "${DISTDIR}/${file}" "${S}/third_party/wheelhouse" || die "unable to copy ${file} to wheelhouse directory"
-		fi
-	done
+    unpack "${DISTDIR}/${MAIN_SRC}" || die "unable to unpack source code"
+    cd "${S}" || die "unable to enter source code directory"
+    unzip -o -j "${DISTDIR}/${PATCH}" -d "${S}" || die "unable to unpack pq patch"
+    
+    # Создаём директорию third_party
+    mkdir -p "${S}/third_party" || die "unable to create third_party directory"
+    
+    # Копируем CPM_LIBS в third_party
+    cp "${DISTDIR}/${CPM_LIBS}" "${S}/third_party/" || die "unable to copy cpm libs"
+    
+    # Переходим в third_party и распаковываем
+    cd "${S}/third_party" || die "unable to enter third-party directory"
+    tar -xzf "${CPM_LIBS}" || die "unable to unpack cpm cache"
+    
+    # Создаём wheelhouse для python пакетов
+    mkdir "wheelhouse" || die "unable to create directory for python packages"
+    
+    # Копируем остальные файлы в wheelhouse
+    for file in ${A}; do
+        if [[ ${file} != ${MAIN_SRC} ]] && [[ ${file} != ${CPM_LIBS} ]] && [[ ${file} != ${PATCH} ]]; then
+            cp "${DISTDIR}/${file}" "${S}/third_party/wheelhouse" || die "unable to copy ${file} to wheelhouse directory"
+        fi
+    done
 }
 
 src_prepare(){
