@@ -115,6 +115,14 @@ jobs:
             echo "dev-db/postgresql postgresql" > /etc/portage/package.env/postgresql
           '
 
+      # ---------- Install curl ----------
+      - name: Install curl
+        run: |
+          docker exec gentoo-test bash -lc '
+            emerge --quiet --nospinner net-misc/curl
+          '
+
+
       # ---------- Download and extract prebuilt binpkg ----------
       - name: Download and extract binpkg archive
         run: |
