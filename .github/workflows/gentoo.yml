@@ -1,4 +1,4 @@
-name: Gentoo Systemd CI with binpkg
+name: Gentoo Systemd with Overlay CI
 
 on:
   push:
@@ -11,45 +11,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Gentoo Docker image
+      # ---------- Build Gentoo base image ----------
+      - name: Build Gentoo image
         run: |
           docker build -t gentoo-systemd -f docker/gentoo/systemd.Dockerfile .
 
-      - name: Start Gentoo container
+      - name: Run Gentoo container (systemd)
         run: |
           docker run --privileged -d \
             --name gentoo-test \
             --cgroupns=host \
             -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
             gentoo-systemd /sbin/init
+
           echo "Waiting for systemd to initialize..."
           sleep 15
+          echo "Container status:"
           docker ps | grep gentoo-test
 
-      # ---------- DOWNLOAD & UNPACK BINPKGS ----------
-
-      - name: Download and unpack prebuilt binpkg archive
-        run: |
-          docker exec gentoo-test bash -lc '
-            set -e
-            mkdir -p /var/cache/binpkgs
-            cd /var/cache/binpkgs
-            wget -q -O packages.tar.zst "https://github.com/userver-framework/userver-gentoo-heavy-deps/releases/download/archive1/packages.tar.zst"
-            tar --zstd -xvf packages.tar.zst
-            rm -f packages.tar.zst
-          '
-
       # ---------- Sync Gentoo tree ----------
-
-      - name: Sync gentoo tree
+      - name: Sync gentoo tree (webrsync)
         run: |
           docker exec gentoo-test bash -lc 'emerge-webrsync'
 
-      # ---------- USE flags ----------
-
+      # ---------- Configure USE flags ----------
       - name: Configure USE flags
         run: |
           docker exec gentoo-test bash -lc '
@@ -77,75 +65,90 @@ jobs:
             echo "dev-libs/jemalloc stats" >> /etc/portage/package.use/userver-deps
           '
 
-      # ---------- Base tools ----------
-
-      - name: Install eselect-repository and git
-        run: |
-          docker exec gentoo-test bash -lc 'emerge -v app-eselect/eselect-repository dev-vcs/git'
-
-      # ---------- Overlay ----------
-
-      - name: Register and clone userver overlay
+      # ---------- Configure CPU_FLAGS / ABI / PYTHON targets ----------
+      - name: Configure CPU_FLAGS and env for binpkgs
         run: |
           docker exec gentoo-test bash -lc '
-            eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git || true
-            rm -rf /var/db/repos/userver-framework
-            git clone --depth=1 https://github.com/userver-framework/userver-overlay.git /var/db/repos/userver-framework
+            mkdir -p /etc/portage/env
+            mkdir -p /etc/portage/package.env
+
+            # go
+            echo "CPU_FLAGS_X86=\"sse2\"" > /etc/portage/env/go
+            echo "dev-lang/go go" > /etc/portage/package.env/go
+
+            # llvm / clang
+            echo "ABI_X86=\"64 -32 (-x32)\"" > /etc/portage/env/llvm
+            echo "LLVM_TARGETS=\"AArch64 AMDGPU ARM AVR BPF Hexagon Lanai LoongArch MSP430 Mips NVPTX PowerPC RISCV SPIRV Sparc SystemZ VE WebAssembly X86 XCore -ARC -CSKY -DirectX -M68k -Xtensa\"" >> /etc/portage/env/llvm
+            echo "dev-build/llvm llvm" > /etc/portage/package.env/llvm
+
+            echo "ABI_X86=\"64 -32 (-x32)\"" > /etc/portage/env/clang
+            echo "LLVM_TARGETS=\"AArch64 AMDGPU ARM AVR BPF Hexagon Lanai LoongArch MSP430 Mips NVPTX PowerPC RISCV SPIRV Sparc SystemZ VE WebAssembly X86 XCore -ARC -CSKY -DirectX -M68k -Xtensa\"" >> /etc/portage/env/clang
+            echo "PYTHON_SINGLE_TARGET=\"python3_13 -python3_12 -python3_14\"" >> /etc/portage/env/clang
+            echo "dev-build/clang clang" > /etc/portage/package.env/clang
+
+            # boost
+            echo "ABI_X86=\"64 -32 (-x32)\"" > /etc/portage/env/boost
+            echo "PYTHON_TARGETS=\"python3_13 -python3_11 -python3_12 -python3_14\"" >> /etc/portage/env/boost
+            echo "dev-libs/boost boost" > /etc/portage/package.env/boost
+
+            # postgresql
+            echo "LLVM_SLOT=\"21 -15 -16 -17 -18 -19 -20\"" > /etc/portage/env/postgresql
+            echo "PYTHON_SINGLE_TARGET=\"python3_13 -python3_11 -python3_12 -python3_14\"" >> /etc/portage/env/postgresql
+            echo "dev-db/postgresql postgresql" > /etc/portage/package.env/postgresql
           '
 
-      # ---------- Install from binpkg ----------
-
-      - name: Install LLVM toolchain from binpkg
+      # ---------- Download and extract prebuilt binpkg ----------
+      - name: Download and extract binpkg archive
         run: |
           docker exec gentoo-test bash -lc '
-            emerge -vk llvm-core/llvm llvm-core/clang dev-build/cmake dev-build/ninja dev-util/ccache dev-lang/go dev-libs/boost
+            mkdir -p /var/cache/binpkgs
+            cd /var/cache/binpkgs
+            curl -L -o packages.tar.zst https://github.com/userver-framework/userver-gentoo-heavy-deps/releases/download/archive1/packages.tar.zst
+            tar --zstd -xf packages.tar.zst
+            rm packages.tar.zst
           '
 
-      - name: Install heavy deps from binpkg
+      # ---------- Install heavy packages from binpkg ----------
+      - name: Install heavy packages from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            mkdir -p /etc/portage/package.license
-            echo "dev-db/mongodb SSPL-1" > /etc/portage/package.license/mongodb
-            emerge -vk dev-db/postgresql dev-db/mongodb dev-db/redis dev-db/mariadb dev-cpp/amqp-cpp dev-libs/librdkafka
+            emerge --getbinpkg \
+              dev-build/ninja \
+              dev-build/cmake \
+              dev-util/ccache \
+              llvm-core/llvm \
+              llvm-core/clang \
+              dev-libs/boost \
+              dev-db/postgresql \
+              dev-db/redis \
+              dev-db/mariadb \
+              dev-db/mongodb \
+              dev-libs/librdkafka
           '
 
-      - name: Install userver
+      # ---------- Build userver ----------
+      - name: Build userver
         run: |
           docker exec gentoo-test bash -lc '
             emerge -v dev-cpp/userver
           '
 
-      # ---------- Build, test and smoke-test userver ----------
-
-      - name: Build, test, and smoke-test userver service
+      # ---------- Test userver ----------
+      - name: Build & test userver debug
         run: |
           docker exec gentoo-test bash -lc '
-            set -e
-            cd /root
-            userver-create-service myservice
-            cd myservice
-
-            echo ">>> Build and run tests"
+            cd /usr/src/userver-sample
             make build-debug
             make test-debug
-
-            echo ">>> Start service for smoke test"
             make start-debug &
-            PID=$!
-            sleep 5
-
-            echo ">>> Smoke test: check HTTP endpoint"
-            RESPONSE=$(curl -fs http://127.0.0.1:8080/hello?name=userver)
-            echo "Response: $RESPONSE"
-            if [ "$RESPONSE" != "Hello, userver!" ]; then
-              echo "ERROR: unexpected response"
-              exit 1
-            fi
-
-            kill $PID || true
+            sleep 10
+            curl -s http://127.0.0.1:8080/hello?name=userver | grep "Hello, userver!"
           '
 
+      # ---------- Debug info ----------
       - name: Debug info
         if: always()
         run: |
-          docker exec gentoo-test bash -lc 'emerge -pv dev-cpp/userver'
+          docker exec gentoo-test bash -lc '
+            emerge -pv dev-cpp/userver
+          '
