@@ -126,7 +126,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc "
             # Установка git и eselect-repository из исходников
-            emerge -v app-eselect/eselect-repository git
+            emerge -v app-eselect/eselect-repository dev-vcs/git
             # Добавляем оверлей userver-framework через eselect
             eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git || true
             # Клонируем оверлей напрямую через git (на случай, если eselect зависнет)
