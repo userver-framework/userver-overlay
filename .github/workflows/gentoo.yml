@@ -88,7 +88,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             mkdir -p /etc/portage/package.license
-            echo ">=dev-db/mongodb-5.0 SSPL-1" >> /etc/portage/package.license
+            echo "dev-db/mongodb SSPL-1" >> /etc/portage/package.license/mongodb
           '
 
       # ---------- Configure CPU_FLAGS / ABI / PYTHON targets ----------
