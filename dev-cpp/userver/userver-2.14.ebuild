@@ -127,7 +127,7 @@ RDEPEND="!dev-cpp/userver-meta dev-util/ruff dev-libs/re2[icu] dev-cpp/cctz dev-
 
 DEPEND="${RDEPEND}"
 
-BDEPEND="app-arch/unzip"
+BDEPEND=""
 
 src_unpack(){
     unpack "${DISTDIR}/${MAIN_SRC}" || die "unable to unpack source code"

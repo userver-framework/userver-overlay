@@ -29,7 +29,6 @@ jobs:
 
           echo "Waiting for systemd to initialize..."
           sleep 15
-          echo "Container status:"
           docker ps | grep gentoo-test
 
       # ---------- Sync Gentoo tree ----------
@@ -37,7 +36,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc 'emerge-webrsync'
 
-      # ---------- Configure USE flags ----------
+      # ---------- Configure USE flags for userver and dependencies ----------
       - name: Configure USE flags
         run: |
           docker exec gentoo-test bash -lc '
@@ -63,6 +62,25 @@ jobs:
             echo "dev-db/postgresql static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-db/unixODBC static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-libs/jemalloc stats" >> /etc/portage/package.use/userver-deps
+          '
+
+      # ---------- Configure USE flags for heavy binpkg ----------
+      - name: Configure USE flags for binpkgs
+        run: |
+          docker exec gentoo-test bash -lc '
+            mkdir -p /etc/portage/package.use
+
+            echo "dev-build/ninja -doc -test" > /etc/portage/package.use/ninja
+            echo "dev-build/cmake ncurses -dap -doc -gui -test -verify-sig" > /etc/portage/package.use/cmake
+            echo "dev-util/ccache static-c++ -doc -redis -test -verify-sig" > /etc/portage/package.use/ccache
+            echo "llvm-core/llvm binutils-plugin libffi zstd -debug -doc -exegesis -libedit -test -verify-sig -xml -z3" > /etc/portage/package.use/llvm
+            echo "llvm-core/clang extra pie static-analyzer -debug -doc -test -verify-sig -xml" > /etc/portage/package.use/clang
+            echo "dev-libs/boost bzip2 context nls stacktrace zlib -debug -doc -icu -lzma -mpi -numpy -python -test -test-full -tools -zstd" > /etc/portage/package.use/boost
+            echo "dev-db/postgresql icu lz4 nls numa pam readline server ssl static-libs systemd uring zlib zstd -debug -doc -kerberos -ldap -llvm -oauth -perl -python -tcl -uuid -xml" > /etc/portage/package.use/postgresql
+            echo "dev-db/redis jemalloc ssl systemd -tcmalloc -test" > /etc/portage/package.use/redis
+            echo "dev-db/mariadb backup pam perl server systemd -bindist -columnstore -cracklib -debug -extraengine -galera -innodb-lz4 -innodb-lzo -innodb-snappy -jdbc -jemalloc -kerberos -latin1 -numa -odbc -oqgraph -profiling -rocksdb -s3 -sphinx -sst-mariabackup -sst-rsync -static -systemtap -tcmalloc -test -xml -yassl" > /etc/portage/package.use/mariadb
+            echo "dev-db/mongodb ssl tools -debug -kerberos -mongosh" > /etc/portage/package.use/mongodb
+            echo "dev-libs/librdkafka lz4 ssl zstd -sasl -static-libs" > /etc/portage/package.use/librdkafka
           '
 
       # ---------- Configure CPU_FLAGS / ABI / PYTHON targets ----------
