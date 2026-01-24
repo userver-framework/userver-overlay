@@ -83,6 +83,14 @@ jobs:
             echo "dev-libs/librdkafka lz4 ssl zstd -sasl -static-libs" > /etc/portage/package.use/librdkafka
           '
 
+      # ---------- Accept SSPL license for MongoDB ----------
+      - name: Accept MongoDB SSPL license
+        run: |
+          docker exec gentoo-test bash -lc '
+            mkdir -p /etc/portage/package.license
+            echo ">=dev-db/mongodb-5.0 SSPL-1" >> /etc/portage/package.license
+          '
+
       # ---------- Configure CPU_FLAGS / ABI / PYTHON targets ----------
       - name: Configure CPU_FLAGS and env for binpkgs
         run: |
@@ -95,33 +103,29 @@ jobs:
             echo "dev-lang/go go" > /etc/portage/package.env/go
 
             # llvm / clang
-            echo "ABI_X86=\"64 -32 (-x32)\"" > /etc/portage/env/llvm
-            echo "LLVM_TARGETS=\"AArch64 AMDGPU ARM AVR BPF Hexagon Lanai LoongArch MSP430 Mips NVPTX PowerPC RISCV SPIRV Sparc SystemZ VE WebAssembly X86 XCore -ARC -CSKY -DirectX -M68k -Xtensa\"" >> /etc/portage/env/llvm
+            echo "ABI_X86=\"64\"" > /etc/portage/env/llvm
+            echo "LLVM_TARGETS=\"AArch64 AMDGPU ARM AVR BPF Hexagon Lanai LoongArch MSP430 Mips NVPTX PowerPC RISCV SPIRV Sparc SystemZ VE WebAssembly X86 XCore\"" >> /etc/portage/env/llvm
             echo "dev-build/llvm llvm" > /etc/portage/package.env/llvm
 
-            echo "ABI_X86=\"64 -32 (-x32)\"" > /etc/portage/env/clang
-            echo "LLVM_TARGETS=\"AArch64 AMDGPU ARM AVR BPF Hexagon Lanai LoongArch MSP430 Mips NVPTX PowerPC RISCV SPIRV Sparc SystemZ VE WebAssembly X86 XCore -ARC -CSKY -DirectX -M68k -Xtensa\"" >> /etc/portage/env/clang
-            echo "PYTHON_SINGLE_TARGET=\"python3_13 -python3_12 -python3_14\"" >> /etc/portage/env/clang
+            echo "ABI_X86=\"64\"" > /etc/portage/env/clang
+            echo "PYTHON_SINGLE_TARGET=\"python3_13\"" >> /etc/portage/env/clang
             echo "dev-build/clang clang" > /etc/portage/package.env/clang
 
             # boost
-            echo "ABI_X86=\"64 -32 (-x32)\"" > /etc/portage/env/boost
-            echo "PYTHON_TARGETS=\"python3_13 -python3_11 -python3_12 -python3_14\"" >> /etc/portage/env/boost
+            echo "ABI_X86=\"64\"" > /etc/portage/env/boost
+            echo "PYTHON_TARGETS=\"python3_13\"" >> /etc/portage/env/boost
             echo "dev-libs/boost boost" > /etc/portage/package.env/boost
 
             # postgresql
-            echo "LLVM_SLOT=\"21 -15 -16 -17 -18 -19 -20\"" > /etc/portage/env/postgresql
-            echo "PYTHON_SINGLE_TARGET=\"python3_13 -python3_11 -python3_12 -python3_14\"" >> /etc/portage/env/postgresql
+            echo "LLVM_SLOT=\"21\"" > /etc/portage/env/postgresql
+            echo "PYTHON_SINGLE_TARGET=\"python3_13\"" >> /etc/portage/env/postgresql
             echo "dev-db/postgresql postgresql" > /etc/portage/package.env/postgresql
           '
 
       # ---------- Install curl ----------
       - name: Install curl
         run: |
-          docker exec gentoo-test bash -lc '
-            emerge --quiet --nospinner net-misc/curl
-          '
-
+          docker exec gentoo-test bash -lc 'emerge net-misc/curl'
 
       # ---------- Download and extract prebuilt binpkg ----------
       - name: Download and extract binpkg archive
@@ -155,9 +159,7 @@ jobs:
       # ---------- Build userver ----------
       - name: Build userver
         run: |
-          docker exec gentoo-test bash -lc '
-            emerge -v dev-cpp/userver
-          '
+          docker exec gentoo-test bash -lc 'emerge -v dev-cpp/userver'
 
       # ---------- Test userver ----------
       - name: Build & test userver debug
@@ -175,6 +177,4 @@ jobs:
       - name: Debug info
         if: always()
         run: |
-          docker exec gentoo-test bash -lc '
-            emerge -pv dev-cpp/userver
-          '
+          docker exec gentoo-test bash -lc 'emerge -pv dev-cpp/userver'
