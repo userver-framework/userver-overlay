@@ -18,7 +18,6 @@ jobs:
       - name: Build Gentoo image
         run: |
           docker build -t gentoo-systemd -f docker/gentoo/systemd.Dockerfile .
-
       - name: Run Gentoo container (systemd)
         run: |
           docker run --privileged -d \
@@ -44,7 +43,7 @@ jobs:
             # userver main package
             echo "dev-cpp/userver postgres redis mongodb mysql rabbitmq kafka sqlite utest odbc" > /etc/portage/package.use/userver
 
-            # Dependencies with explicit USE flags only
+            # Dependencies to be built from source with explicit USE flags
             echo "dev-libs/re2 icu" >> /etc/portage/package.use/userver-deps
             echo "dev-libs/cyrus-sasl static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-lang/python ssl" >> /etc/portage/package.use/userver-deps
@@ -62,16 +61,16 @@ jobs:
             echo "dev-db/unixODBC static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-libs/jemalloc stats" >> /etc/portage/package.use/userver-deps
 
-            # Heavy packages USE flags (binpkg-compatible)
+            # Heavy packages USE flags (binary-friendly)
             echo "dev-build/ninja -doc -test" > /etc/portage/package.use/ninja
-            echo "dev-build/cmake ncurses -dap -doc -gui -test -verify-sig" > /etc/portage/package.use/cmake
             echo "dev-util/ccache static-c++ -doc -redis -test -verify-sig" > /etc/portage/package.use/ccache
-            echo "llvm-core/llvm binutils-plugin libffi zstd -debug -doc -exegesis -libedit -test -verify-sig -xml -z3" > /etc/portage/package.use/llvm
-            echo "llvm-core/clang extra pie static-analyzer -debug -doc -test -verify-sig -xml" > /etc/portage/package.use/clang
+            echo "dev-build/cmake ncurses -dap -doc -gui -test -verify-sig" > /etc/portage/package.use/cmake
+            echo "llvm-core/llvm binutils-plugin libffi zstd -debug -debuginfod -doc -exegesis -libedit -test -verify-sig -xml -z3" > /etc/portage/package.use/llvm
+            echo "llvm-core/clang extra pie static-analyzer -debug -doc -ieee-long-double -test -verify-sig -xml" > /etc/portage/package.use/clang
             echo "dev-libs/boost bzip2 context nls stacktrace zlib -debug -doc -icu -lzma -mpi -numpy -python -test -test-full -tools -zstd" > /etc/portage/package.use/boost
-            echo "dev-db/postgresql icu lz4 nls numa pam readline server ssl systemd uring zlib zstd static-libs -debug -doc -kerberos -ldap -llvm -oauth -perl -python -tcl -uuid xml" > /etc/portage/package.use/postgresql
-            echo "dev-db/redis jemalloc ssl systemd -tcmalloc -test" > /etc/portage/package.use/redis
-            echo "dev-db/mariadb backup pam perl server systemd -bindist -columnstore -cracklib -debug -extraengine -galera -innodb-lz4 -innodb-lzo -innodb-snappy -jdbc -jemalloc -kerberos -latin1 -numa -odbc -oqgraph -profiling -rocksdb -s3 -sphinx -sst-mariabackup -sst-rsync -static -systemtap -tcmalloc -test -xml -yassl" > /etc/portage/package.use/mariadb
+            echo "dev-db/postgresql icu lz4 nls numa pam readline server ssl static-libs systemd uring zlib zstd -debug -doc -kerberos -ldap -llvm -oauth -perl -python -selinux -tcl -uuid -xml" > /etc/portage/package.use/postgresql
+            echo "dev-db/redis jemalloc ssl systemd -selinux -tcmalloc -test" > /etc/portage/package.use/redis
+            echo "dev-db/mariadb backup pam perl server systemd -bindist -columnstore -cracklib -debug -extraengine -galera -innodb-lz4 -innodb-lzo -innodb-snappy -jdbc -jemalloc -kerberos -latin1 -mroonga -numa -odbc -oqgraph -profiling -rocksdb -s3 -selinux -sphinx -sst-mariabackup -sst-rsync -static -systemtap -tcmalloc -test -xml -yassl" > /etc/portage/package.use/mariadb
             echo "dev-libs/librdkafka lz4 ssl zstd -sasl -static-libs" > /etc/portage/package.use/librdkafka
             echo "dev-db/mongodb ssl tools -debug -kerberos -mongosh" > /etc/portage/package.use/mongodb
           '
@@ -108,13 +107,10 @@ jobs:
 
             # PostgreSQL
             echo "ABI_X86=\"64\"" > /etc/portage/env/postgresql
-            echo "LLVM_SLOT=\"20\"" >> /etc/portage/env/postgresql
+            echo "LLVM_SLOT=\"21\"" >> /etc/portage/env/postgresql
             echo "PYTHON_SINGLE_TARGET=\"python3_13\"" >> /etc/portage/env/postgresql
             echo "dev-db/postgresql postgresql" > /etc/portage/package.env/postgresql
 
-            # mongodb (CPU_FLAGS!)
-            echo "CPU_FLAGS_X86=\"-avx\"" > /etc/portage/env/mongodb
-            echo "dev-db/mongodb mongodb" > /etc/portage/package.env/mongodb
           '
 
       # ---------- Install curl ----------
@@ -146,7 +142,7 @@ jobs:
       - name: Install heavy packages from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            FEATURES="binpkg-ignore-signature" emerge --getbinpkg \
+            FEATURES="binpkg-ignore-signature" emerge --usebinpkg \
               dev-build/ninja \
               dev-build/cmake \
               dev-util/ccache \
@@ -173,16 +169,13 @@ jobs:
             cd /root
             userver-create-service myservice
             cd myservice
-
             echo ">>> Build and run tests"
             make build-debug
             make test-debug
-
             echo ">>> Start service for smoke test"
             make start-debug &
             PID=$!
             sleep 5
-
             echo ">>> Smoke test: check HTTP endpoint"
             RESPONSE=$(curl -fs http://127.0.0.1:8080/hello?name=userver)
             echo "Response: $RESPONSE"
@@ -190,7 +183,6 @@ jobs:
               echo "ERROR: unexpected response"
               exit 1
             fi
-
             kill $PID || true
           '
 
