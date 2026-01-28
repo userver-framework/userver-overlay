@@ -142,7 +142,7 @@ jobs:
       - name: Install heavy packages from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            FEATURES="binpkg-ignore-signature" emerge --usebinpkg \
+            FEATURES="binpkg-ignore-signature" emerge --usepkg \
               dev-build/ninja \
               dev-build/cmake \
               dev-util/ccache \
