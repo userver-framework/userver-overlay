@@ -26,7 +26,6 @@ jobs:
             --cgroupns=host \
             -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
             gentoo-systemd /sbin/init
-
           echo "Waiting for systemd to initialize..."
           sleep 15
           docker ps | grep gentoo-test
@@ -36,7 +35,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc 'emerge-webrsync'
 
-      # ---------- Configure USE flags for userver and dependencies ----------
+      # ---------- Configure USE flags ----------
       - name: Configure USE flags
         run: |
           docker exec gentoo-test bash -lc '
@@ -62,59 +61,60 @@ jobs:
             echo "dev-db/postgresql static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-db/unixODBC static-libs" >> /etc/portage/package.use/userver-deps
             echo "dev-libs/jemalloc stats" >> /etc/portage/package.use/userver-deps
-          '
 
-      # ---------- Configure USE flags for heavy binpkg ----------
-      - name: Configure USE flags for binpkgs
-        run: |
-          docker exec gentoo-test bash -lc '
-            mkdir -p /etc/portage/package.use
-
+            # Heavy packages USE flags (binpkg-compatible)
             echo "dev-build/ninja -doc -test" > /etc/portage/package.use/ninja
             echo "dev-build/cmake ncurses -dap -doc -gui -test -verify-sig" > /etc/portage/package.use/cmake
             echo "dev-util/ccache static-c++ -doc -redis -test -verify-sig" > /etc/portage/package.use/ccache
             echo "llvm-core/llvm binutils-plugin libffi zstd -debug -doc -exegesis -libedit -test -verify-sig -xml -z3" > /etc/portage/package.use/llvm
             echo "llvm-core/clang extra pie static-analyzer -debug -doc -test -verify-sig -xml" > /etc/portage/package.use/clang
             echo "dev-libs/boost bzip2 context nls stacktrace zlib -debug -doc -icu -lzma -mpi -numpy -python -test -test-full -tools -zstd" > /etc/portage/package.use/boost
-            echo "dev-db/postgresql icu lz4 nls numa pam readline server ssl static-libs systemd uring zlib zstd -debug -doc -kerberos -ldap -llvm -oauth -perl -python -tcl -uuid -xml" > /etc/portage/package.use/postgresql
+            echo "dev-db/postgresql icu lz4 nls numa pam readline server ssl systemd uring zlib zstd static-libs -debug -doc -kerberos -ldap -llvm -oauth -perl -python -tcl -uuid xml" > /etc/portage/package.use/postgresql
             echo "dev-db/redis jemalloc ssl systemd -tcmalloc -test" > /etc/portage/package.use/redis
             echo "dev-db/mariadb backup pam perl server systemd -bindist -columnstore -cracklib -debug -extraengine -galera -innodb-lz4 -innodb-lzo -innodb-snappy -jdbc -jemalloc -kerberos -latin1 -numa -odbc -oqgraph -profiling -rocksdb -s3 -sphinx -sst-mariabackup -sst-rsync -static -systemtap -tcmalloc -test -xml -yassl" > /etc/portage/package.use/mariadb
-            echo "dev-db/mongodb ssl tools -debug -kerberos -mongosh" > /etc/portage/package.use/mongodb
             echo "dev-libs/librdkafka lz4 ssl zstd -sasl -static-libs" > /etc/portage/package.use/librdkafka
+            echo "dev-db/mongodb ssl tools -debug -kerberos -mongosh" > /etc/portage/package.use/mongodb
           '
 
-      # ---------- Accept SSPL license for MongoDB ----------
+      # ---------- Accept MongoDB SSPL license ----------
       - name: Accept MongoDB SSPL license
         run: |
           docker exec gentoo-test bash -lc '
             mkdir -p /etc/portage/package.license
-            echo "dev-db/mongodb SSPL-1" >> /etc/portage/package.license/mongodb
+            echo "dev-db/mongodb SSPL-1" > /etc/portage/package.license/mongodb
           '
 
-      # ---------- Configure CPU_FLAGS / ABI / PYTHON targets ----------
-      - name: Configure CPU_FLAGS and env for binpkgs
+      # ---------- Configure ABI / PYTHON / CPU_FLAGS ----------
+      - name: Configure ABI / PYTHON / CPU_FLAGS
         run: |
           docker exec gentoo-test bash -lc '
             mkdir -p /etc/portage/env
             mkdir -p /etc/portage/package.env
-            # go
-            echo "CPU_FLAGS_X86=\"sse2\"" > /etc/portage/env/go
-            echo "dev-lang/go go" > /etc/portage/package.env/go
-            # llvm / clang
+
+            # llvm
             echo "ABI_X86=\"64\"" > /etc/portage/env/llvm
             echo "LLVM_TARGETS=\"AArch64 AMDGPU ARM AVR BPF Hexagon Lanai LoongArch MSP430 Mips NVPTX PowerPC RISCV SPIRV Sparc SystemZ VE WebAssembly X86 XCore\"" >> /etc/portage/env/llvm
-            echo "dev-build/llvm llvm" > /etc/portage/package.env/llvm
+            echo "llvm-core/llvm llvm" > /etc/portage/package.env/llvm
+
+            # clang
             echo "ABI_X86=\"64\"" > /etc/portage/env/clang
             echo "PYTHON_SINGLE_TARGET=\"python3_13\"" >> /etc/portage/env/clang
-            echo "dev-build/clang clang" > /etc/portage/package.env/clang
+            echo "llvm-core/clang clang" > /etc/portage/package.env/clang
+
             # boost
             echo "ABI_X86=\"64\"" > /etc/portage/env/boost
             echo "PYTHON_TARGETS=\"python3_13\"" >> /etc/portage/env/boost
             echo "dev-libs/boost boost" > /etc/portage/package.env/boost
-            # postgresql
-            echo "LLVM_SLOT=\"21\"" > /etc/portage/env/postgresql
+
+            # PostgreSQL
+            echo "ABI_X86=\"64\"" > /etc/portage/env/postgresql
+            echo "LLVM_SLOT=\"20\"" >> /etc/portage/env/postgresql
             echo "PYTHON_SINGLE_TARGET=\"python3_13\"" >> /etc/portage/env/postgresql
             echo "dev-db/postgresql postgresql" > /etc/portage/package.env/postgresql
+
+            # mongodb (CPU_FLAGS!)
+            echo "CPU_FLAGS_X86=\"-avx\"" > /etc/portage/env/mongodb
+            echo "dev-db/mongodb mongodb" > /etc/portage/package.env/mongodb
           '
 
       # ---------- Install curl ----------
@@ -122,18 +122,16 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc 'emerge net-misc/curl'
 
+      # ---------- Install base tools and sync userver overlay ----------
       - name: Install base tools and sync userver overlay
         run: |
-          docker exec gentoo-test bash -lc "
-            # Установка git и eselect-repository из исходников
+          docker exec gentoo-test bash -lc '
             emerge -v app-eselect/eselect-repository dev-vcs/git
-            # Добавляем оверлей userver-framework через eselect
             eselect repository add userver-framework git https://github.com/userver-framework/userver-overlay.git || true
-            # Клонируем оверлей напрямую через git (на случай, если eselect зависнет)
             git clone https://github.com/userver-framework/userver-overlay.git /var/db/repos/userver-framework || true
-          "
+          '
 
-      # ---------- Download and extract prebuilt binpkg ----------
+      # ---------- Download and extract binpkg ----------
       - name: Download and extract binpkg archive
         run: |
           docker exec gentoo-test bash -lc '
@@ -167,16 +165,33 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc 'emerge -v dev-cpp/userver'
 
-      # ---------- Test userver ----------
-      - name: Build & test userver debug
+      # ---------- Build and test userver service ----------
+      - name: Build and test userver service
         run: |
           docker exec gentoo-test bash -lc '
-            cd /usr/src/userver-sample
+            set -e
+            cd /root
+            userver-create-service myservice
+            cd myservice
+
+            echo ">>> Build and run tests"
             make build-debug
             make test-debug
+
+            echo ">>> Start service for smoke test"
             make start-debug &
-            sleep 10
-            curl -s http://127.0.0.1:8080/hello?name=userver | grep "Hello, userver!"
+            PID=$!
+            sleep 5
+
+            echo ">>> Smoke test: check HTTP endpoint"
+            RESPONSE=$(curl -fs http://127.0.0.1:8080/hello?name=userver)
+            echo "Response: $RESPONSE"
+            if [ "$RESPONSE" != "Hello, userver!" ]; then
+              echo "ERROR: unexpected response"
+              exit 1
+            fi
+
+            kill $PID || true
           '
 
       # ---------- Debug info ----------
