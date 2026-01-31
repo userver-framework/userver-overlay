@@ -143,6 +143,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             echo 'PKGDIR="/var/cache/binpkgs"' >> /etc/portage/make.conf
+            emaint binhost --fix
             FEATURES="binpkg-ignore-signature" emerge --usepkg \
               dev-build/ninja \
               dev-build/cmake \
