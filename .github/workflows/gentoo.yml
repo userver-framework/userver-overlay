@@ -134,7 +134,7 @@ jobs:
             mkdir -p /var/cache/binpkgs
             cd /var/cache/binpkgs
             curl -L -o packages.tar.zst https://github.com/userver-framework/userver-gentoo-heavy-deps/releases/download/archive1/packages.tar.zst
-            tar --zstd -xf packages.tar.zst
+            tar --zstd -xvf packages.tar.zst -C /var/cache/binpkgs/
             rm packages.tar.zst
           '
 
@@ -142,6 +142,7 @@ jobs:
       - name: Install heavy packages from binpkg
         run: |
           docker exec gentoo-test bash -lc '
+            echo 'PKGDIR="/var/cache/binpkgs"' >> /etc/portage/make.conf
             FEATURES="binpkg-ignore-signature" emerge --usepkg \
               dev-build/ninja \
               dev-build/cmake \
