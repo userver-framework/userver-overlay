@@ -142,8 +142,7 @@ jobs:
       - name: Install heavy packages from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            echo 'PKGDIR="/var/cache/binpkgs"' >> /etc/portage/make.conf
-            emaint binhost --fix
+            emaint binpkg --fix
             FEATURES="binpkg-ignore-signature" emerge --usepkg --getbinpkg \
               dev-build/ninja \
               dev-build/cmake \
