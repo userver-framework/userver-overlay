@@ -142,19 +142,18 @@ jobs:
       - name: Install heavy packages from binpkg
         run: |
           docker exec gentoo-test bash -lc '
-            emaint binpkg --fix
-            FEATURES="binpkg-ignore-signature" emerge --usepkg --getbinpkg \
-              dev-build/ninja \
-              dev-build/cmake \
-              dev-util/ccache \
-              llvm-core/llvm \
-              llvm-core/clang \
-              dev-libs/boost \
-              dev-db/postgresql \
-              dev-db/redis \
-              dev-db/mariadb \
-              dev-db/mongodb \
-              dev-libs/librdkafka
+            FEATURES="binpkg-ignore-signature" emerge --usepkg --verbose \
+              /var/cache/binpkgs/dev-build/ninja/ninja-1.13.2-r1-1.gpkg.tar \
+              /var/cache/binpkgs/dev-build/cmake/cmake-4.1.4-1.gpkg.tar \
+              /var/cache/binpkgs/dev-util/ccache/ccache-4.12.1-1.gpkg.tar \
+              /var/cache/binpkgs/llvm-core/llvm/llvm-21.1.8-1.gpkg.tar \
+              /var/cache/binpkgs/llvm-core/clang/clang-21.1.8-1.gpkg.tar \
+              /var/cache/binpkgs/dev-libs/boost/boost-1.88.0-r1-1.gpkg.tar \
+              /var/cache/binpkgs/dev-db/postgresql/postgresql-18.1-1.gpkg.tar \
+              /var/cache/binpkgs/dev-db/redis/redis-8.2.2-1.gpkg.tar \
+              /var/cache/binpkgs/dev-db/mariadb/mariadb-11.8.3-r2-1.gpkg.tar \
+              /var/cache/binpkgs/dev-db/mongodb/mongodb-8.0.8-1.gpkg.tar \
+              /var/cache/binpkgs/dev-libs/librdkafka/librdkafka-2.10.0-1.gpkg.tar
           '
 
       # ---------- Build userver ----------
