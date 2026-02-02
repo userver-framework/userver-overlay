@@ -131,10 +131,10 @@ jobs:
       - name: Download and extract binpkg archive
         run: |
           docker exec gentoo-test bash -lc '
-            mkdir -p /var/cache/binpkgs
-            cd /var/cache/binpkgs
+            mkdir -p /root
+            cd /root/
             curl -L -o packages.tar.zst https://github.com/userver-framework/userver-gentoo-heavy-deps/releases/download/archive1/packages.tar.zst
-            tar --zstd -xvf packages.tar.zst -C /var/cache/binpkgs/
+            tar --zstd -xvf packages.tar.zst -C /root
             rm packages.tar.zst
           '
 
@@ -143,17 +143,17 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             FEATURES="binpkg-ignore-signature" emerge --usepkg --verbose \
-              /var/cache/binpkgs/dev-build/ninja/ninja-1.13.2-r1-1.gpkg.tar \
-              /var/cache/binpkgs/dev-build/cmake/cmake-4.1.4-1.gpkg.tar \
-              /var/cache/binpkgs/dev-util/ccache/ccache-4.12.1-1.gpkg.tar \
-              /var/cache/binpkgs/llvm-core/llvm/llvm-21.1.8-1.gpkg.tar \
-              /var/cache/binpkgs/llvm-core/clang/clang-21.1.8-1.gpkg.tar \
-              /var/cache/binpkgs/dev-libs/boost/boost-1.88.0-r1-1.gpkg.tar \
-              /var/cache/binpkgs/dev-db/postgresql/postgresql-18.1-1.gpkg.tar \
-              /var/cache/binpkgs/dev-db/redis/redis-8.2.2-1.gpkg.tar \
-              /var/cache/binpkgs/dev-db/mariadb/mariadb-11.8.3-r2-1.gpkg.tar \
-              /var/cache/binpkgs/dev-db/mongodb/mongodb-8.0.8-1.gpkg.tar \
-              /var/cache/binpkgs/dev-libs/librdkafka/librdkafka-2.10.0-1.gpkg.tar
+              /root/dev-build/ninja/ninja-1.13.2-r1-1.gpkg.tar \
+              /root/dev-build/cmake/cmake-4.1.4-1.gpkg.tar \
+              /root/dev-util/ccache/ccache-4.12.1-1.gpkg.tar \
+              /root/llvm-core/llvm/llvm-21.1.8-1.gpkg.tar \
+              /root/llvm-core/clang/clang-21.1.8-1.gpkg.tar \
+              /root/dev-libs/boost/boost-1.88.0-r1-1.gpkg.tar \
+              /root/dev-db/postgresql/postgresql-18.1-1.gpkg.tar \
+              /root/dev-db/redis/redis-8.2.2-1.gpkg.tar \
+              /root/dev-db/mariadb/mariadb-11.8.3-r2-1.gpkg.tar \
+              /root/dev-db/mongodb/mongodb-8.0.8-1.gpkg.tar \
+              /root/dev-libs/librdkafka/librdkafka-2.10.0-1.gpkg.tar
           '
 
       # ---------- Build userver ----------
