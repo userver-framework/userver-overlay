@@ -10,6 +10,11 @@ jobs:
   gentoo-userver:
     runs-on: ubuntu-latest
 
+    env:
+      BINHOST_IP: ${{ secrets.BINHOST_IP }}
+      BINHOST_PORT: ${{ secrets.BINHOST_PORT }}
+      BINHOST_CERT: ${{ secrets.BINHOST_CERT }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -127,33 +132,54 @@ jobs:
             git clone https://github.com/userver-framework/userver-overlay.git /var/db/repos/userver-framework || true
           '
 
-      # ---------- Download and extract binpkg ----------
-      - name: Download and extract binpkg archive
+      # ---------- Install self-signed binhost certificate ----------
+      - name: Install binhost SSL certificate
+        run: |
+          docker exec gentoo-test bash -lc "
+            mkdir -p /usr/local/share/ca-certificates/binhost
+            printf '%s\n' \"\$BINHOST_CERT\" > /usr/local/share/ca-certificates/binhost/binhost.crt
+            update-ca-certificates
+          "
+
+      # ---------- Remove all existing binhosts ----------
+      - name: Remove all existing binhosts
         run: |
           docker exec gentoo-test bash -lc '
-            mkdir -p /root
-            cd /root/
-            curl -L -o packages.tar.zst https://github.com/userver-framework/userver-gentoo-heavy-deps/releases/download/archive1/packages.tar.zst
-            tar --zstd -xvf packages.tar.zst -C /root
-            rm packages.tar.zst
+            rm -rf /etc/portage/binrepos.conf
+            mkdir -p /etc/portage/binrepos.conf
           '
 
-      # ---------- Install heavy packages from binpkg ----------
-      - name: Install heavy packages from binpkg
+      # ---------- Configure single IP-based binhost (echo lines) ----------
+      - name: Configure single IP-based binhost
+        run: |
+          docker exec gentoo-test bash -lc "
+            echo '[custom-binhost]' > /etc/portage/binrepos.conf/custom-binhost.conf
+            echo 'priority = 9999' >> /etc/portage/binrepos.conf/custom-binhost.conf
+            echo 'sync-uri = https://${BINHOST_IP}:${BINHOST_PORT}/packages' >> /etc/portage/binrepos.conf/custom-binhost.conf
+          "
+
+      # ---------- Sync Gentoo tree ----------
+      - name: Sync gentoo tree again (webrsync)
+        run: |
+          docker exec gentoo-test bash -lc 'emerge-webrsync'
+
+      # ---------- Install heavy packages (binpkg) ----------
+      - name: Install heavy packages from custom binhost
         run: |
           docker exec gentoo-test bash -lc '
-            FEATURES="binpkg-ignore-signature" emerge --usepkg --verbose \
-              /root/dev-build/ninja/ninja-1.13.2-r1-1.gpkg.tar \
-              /root/dev-build/cmake/cmake-4.1.4-1.gpkg.tar \
-              /root/dev-util/ccache/ccache-4.12.1-1.gpkg.tar \
-              /root/llvm-core/llvm/llvm-21.1.8-1.gpkg.tar \
-              /root/llvm-core/clang/clang-21.1.8-1.gpkg.tar \
-              /root/dev-libs/boost/boost-1.88.0-r1-1.gpkg.tar \
-              /root/dev-db/postgresql/postgresql-18.1-1.gpkg.tar \
-              /root/dev-db/redis/redis-8.2.2-1.gpkg.tar \
-              /root/dev-db/mariadb/mariadb-11.8.3-r2-1.gpkg.tar \
-              /root/dev-db/mongodb/mongodb-8.0.8-1.gpkg.tar \
-              /root/dev-libs/librdkafka/librdkafka-2.10.0-1.gpkg.tar
+            FEATURES="binpkg-ignore-signature" \
+            emerge -v --getbinpkg --binpkg-respect-use=y \
+              dev-build/ninja \
+              dev-build/cmake \
+              dev-util/ccache \
+              llvm-core/llvm \
+              llvm-core/clang \
+              dev-libs/boost \
+              dev-db/postgresql \
+              dev-db/redis \
+              dev-db/mariadb \
+              dev-db/mongodb \
+              dev-libs/librdkafka
           '
 
       # ---------- Build userver ----------
