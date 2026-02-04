@@ -118,11 +118,6 @@ jobs:
 
           '
 
-      # ---------- Install curl ----------
-      - name: Install curl
-        run: |
-          docker exec gentoo-test bash -lc 'emerge net-misc/curl'
-
       # ---------- Install base tools and sync userver overlay ----------
       - name: Install base tools and sync userver overlay
         run: |
@@ -137,7 +132,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc "
             mkdir -p /usr/local/share/ca-certificates/binhost
-            printf '%s\n' \"\$BINHOST_CERT\" > /usr/local/share/ca-certificates/binhost/binhost.crt
+            printf '%s\n' \"\${BINHOST_CERT}\" > /usr/local/share/ca-certificates/binhost/binhost.crt
             update-ca-certificates
           "
 
