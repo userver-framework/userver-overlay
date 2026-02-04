@@ -150,7 +150,7 @@ jobs:
           docker exec gentoo-test bash -lc "
             echo '[custom-binhost]' > /etc/portage/binrepos.conf/custom-binhost.conf
             echo 'priority = 9999' >> /etc/portage/binrepos.conf/custom-binhost.conf
-            echo 'sync-uri = https://${BINHOST_IP}:${BINHOST_PORT}/packages' >> /etc/portage/binrepos.conf/custom-binhost.conf
+            echo 'sync-uri = https://${BINHOST_IP}:${BINHOST_PORT}/ci-binpkgs' >> /etc/portage/binrepos.conf/custom-binhost.conf
           "
 
       # ---------- Sync Gentoo tree ----------
