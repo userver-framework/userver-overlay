@@ -132,7 +132,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc "
             mkdir -p /usr/local/share/ca-certificates/binhost
-            printf '%s\n' \"\${BINHOST_CERT}\" > /usr/local/share/ca-certificates/binhost/binhost.crt
+            printf '%s\n' \"${BINHOST_CERT}\" > /usr/local/share/ca-certificates/binhost/binhost.crt
             update-ca-certificates
           "
 
