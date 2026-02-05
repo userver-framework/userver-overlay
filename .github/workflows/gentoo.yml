@@ -163,7 +163,7 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc '
             FEATURES="binpkg-ignore-signature" \
-            emerge -v --getbinpkg --binpkg-respect-use=y \
+            emerge -v --getbinpkg --binpkg-respect-use=y --verbose \
               dev-build/ninja \
               dev-build/cmake \
               dev-util/ccache \
