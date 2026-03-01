@@ -85,6 +85,14 @@ jobs:
             echo "dev-db/mongodb SSPL-1" > /etc/portage/package.license/mongodb
           '
 
+      # ---------- Accept AMQP ~amd64 keyword ----------
+      - name: Accept AMQP ~amd64 keyword
+        run: |
+          docker exec gentoo-test bash -lc '
+            mkdir -p /etc/portage/package.accept_keywords
+            echo "dev-cpp/amqp-cpp ~amd64" > /etc/portage/package.accept_keywords/amqp-cpp
+          '
+
       # ---------- Configure ABI / PYTHON / CPU_FLAGS ----------
       - name: Configure ABI / PYTHON / CPU_FLAGS
         run: |
@@ -194,7 +202,7 @@ jobs:
             echo ">>> Start service for smoke test"
             make start-debug &
             PID=$!
-            sleep 5
+            sleep 30
             echo ">>> Smoke test: check HTTP endpoint"
             RESPONSE=$(curl -fs http://127.0.0.1:8080/hello?name=userver)
             echo "Response: $RESPONSE"

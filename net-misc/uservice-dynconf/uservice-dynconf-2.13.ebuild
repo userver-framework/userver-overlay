@@ -3,13 +3,81 @@
 
 EAPI=8
 
-inherit systemd
+inherit systemd pypi
 
 DESCRIPTION="The service to control dynamic configs of other userver-based services"
 
 HOMEPAGE="https://github.com/userver-framework/uservice-dynconf"
 
-SRC_URI="https://github.com/userver-framework/uservice-dynconf/archive/refs/tags/v2.13.tar.gz -> uservice-dynconf-2.13.tar.gz"
+MAIN_SRC="uservice-dynconf-2.13.tar.gz"
+
+SRC_URI="https://github.com/userver-framework/uservice-dynconf/archive/refs/tags/v2.13.tar.gz -> ${MAIN_SRC}"
+
+PYTHON_LIBS=(
+    "aio-pika 9.6.1"
+    "aiohappyeyeballs 2.6.1"
+    "aiormq 6.9.3"
+    "aiosignal 1.4.0"
+    "async-timeout 5.0.1"
+    "attrs 25.4.0"
+    "cached-property 2.0.1"
+    "crc 7.1.0"
+    "dnspython 2.8.0"
+    "frozenlist 1.8.0"
+    "idna 3.11"
+    "Jinja2 3.1.6"
+    "packaging 26.0"
+    "pytest 9.0.2"
+    "pytest-aiohttp 1.1.0"
+    "pytest-asyncio 1.3.0"
+    "wheel 0.46.3"
+    "yandex-taxi-testsuite 0.4.5"
+    "yarl 1.22.0"
+)
+
+MANYLINUX_PYTHON_LIBS=(
+    "aiohttp 3.13.3"
+    "pymongo 4.16.0"
+)
+
+PYTHON_SDIST_LIBS=(
+    "aiokafka 0.13.0"
+    "MarkupSafe 3.0.3"
+    "python-redis 0.4.0"
+    "yandex-pgmigrate 1.0.11"
+)
+
+PY2PY3_LIBS=(
+    "python-dateutil 2.9.0.post0"
+)
+
+for dep in "${PYTHON_LIBS[@]}"; do
+        set -- ${dep}
+        name=$1
+        ver=$2
+        SRC_URI+=" $(pypi_wheel_url "${name}" "${ver}")"
+done
+
+for dep in "${MANYLINUX_PYTHON_LIBS[@]}"; do
+        set -- ${dep}
+        name=$1
+        ver=$2
+	SRC_URI+=" $(pypi_wheel_url "${name}" "${ver}" "cp313" "cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64")"
+done
+
+for dep in "${PYTHON_SDIST_LIBS[@]}"; do
+        set -- ${dep}
+        name=$1
+        ver=$2
+	SRC_URI+=" $(pypi_sdist_url "${name}" "${ver}")"
+done
+
+for dep in "${PY2PY3_LIBS[@]}"; do
+        set -- ${dep}
+        name=$1
+        ver=$2
+        SRC_URI+=" $(pypi_wheel_url "${name}" "${ver}" "py2.py3")"
+done
 
 S="${WORKDIR}/${P}"
 
@@ -24,6 +92,27 @@ IUSE=""
 RDEPEND="dev-db/postgresql[static-libs] acct-user/uservice"
 
 BDEPEND="dev-cpp/userver[postgres]"
+
+src_unpack(){
+    unpack "${DISTDIR}/${MAIN_SRC}" || die "unable to unpack source code"
+    cd "${S}" || die "unable to enter source code directory"
+
+    # Создаём директорию third_party
+    mkdir -p "${S}/third_party" || die "unable to create third_party directory"
+    
+    # Переходим в third_party и распаковываем
+    cd "${S}/third_party" || die "unable to enter third-party directory"
+
+    # Создаём wheelhouse для python пакетов
+    mkdir "wheelhouse" || die "unable to create directory for python packages"
+    
+    # Копируем остальные файлы в wheelhouse
+    for file in ${A}; do
+        if [[ ${file} != ${MAIN_SRC} ]]; then
+            cp "${DISTDIR}/${file}" "${S}/third_party/wheelhouse" || die "unable to copy ${file} to wheelhouse directory"
+        fi
+    done
+}
 
 src_compile() {
 	cd "${S}/"
