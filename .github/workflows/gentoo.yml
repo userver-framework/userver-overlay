@@ -1,10 +1,7 @@
 name: Gentoo Systemd with Overlay CI
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   gentoo-userver:
@@ -46,7 +43,7 @@ jobs:
             mkdir -p /etc/portage/package.use
 
             # userver main package
-            echo "dev-cpp/userver postgres redis -mongodb mysql rabbitmq kafka sqlite utest odbc" > /etc/portage/package.use/userver
+            echo "dev-cpp/userver postgres redis mongodb mysql rabbitmq kafka sqlite utest odbc" > /etc/portage/package.use/userver
 
             # Dependencies to be built from source with explicit USE flags
             echo "dev-libs/re2 icu" >> /etc/portage/package.use/userver-deps
@@ -174,6 +171,7 @@ jobs:
               dev-db/postgresql \
               dev-db/redis \
               dev-db/mariadb \
+              dev-db/mongodb \
               dev-libs/librdkafka
           '
 

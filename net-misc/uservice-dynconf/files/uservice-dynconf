@@ -1,0 +1,44 @@
+#!/sbin/openrc-run
+
+# Описание службы
+description="Userver Dynconf Service"
+
+# Путь до бинарника
+command="/usr/bin/uservice-dynconf"
+
+# Аргументы запуска
+command_args="--config /etc/uservice-dynconf/config_vars.yaml"
+
+# Файл pid (если нужен)
+pidfile="/run/uservice-dynconf.pid"
+
+# От какого пользователя запускать (опционально)
+command_user="uservice"
+
+depend() {
+    # Ожидать сети перед запуском
+    need net
+}
+
+start_pre() {
+    # Убедиться, что директория для pid существует
+    checkpath --directory --mode 0755 /run/uservice-dynconf
+}
+
+start() {
+    ebegin "Starting uservice-dynconf"
+    start-stop-daemon --start \
+        --exec "${command}" \
+        --pidfile "${pidfile}" \
+        --background \
+        --make-pidfile \
+        -- ${command_args}
+    eend $? "Failed to start uservice-dynconf"
+}
+
+stop() {
+    ebegin "Stopping uservice-dynconf"
+    start-stop-daemon --stop \
+        --pidfile "${pidfile}"
+    eend $? "Failed to stop uservice-dynconf"
+}

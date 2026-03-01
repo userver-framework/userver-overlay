@@ -1,0 +1,15 @@
+[Unit]
+Description=Userver Dynconf Service
+After=network.target
+
+[Service]
+Type=simple
+User=uservice
+Group=uservice
+NoNewPrivileges=yes
+PrivateTmp=yes
+ExecStart=/usr/bin/uservice-dynconf --config /etc/uservice-dynconf/config_vars.yaml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
