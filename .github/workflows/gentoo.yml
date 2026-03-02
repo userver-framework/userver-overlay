@@ -175,7 +175,6 @@ jobs:
               dev-util/ccache \
               llvm-core/llvm \
               llvm-core/clang \
-              dev-libs/boost \
               dev-db/postgresql \
               dev-db/redis \
               dev-db/mariadb \
