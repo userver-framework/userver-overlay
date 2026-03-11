@@ -171,6 +171,7 @@ jobs:
             emerge -v --getbinpkg --binpkg-respect-use=n --verbose \
               dev-build/ninja \
               dev-lang/go \
+              =dev-libs/libfmt-11.1.4 \
               dev-build/cmake \
               dev-util/ccache \
               llvm-core/llvm \
