@@ -180,7 +180,7 @@ jobs:
               dev-db/postgresql \
               dev-db/redis \
               dev-db/mariadb \
-              =dev-libs/boost-1.88.0-r1 \
+              dev-libs/boost \
               dev-db/mongodb \
               dev-libs/librdkafka
           '
