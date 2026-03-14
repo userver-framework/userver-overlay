@@ -190,12 +190,24 @@ jobs:
         run: |
           docker exec gentoo-test bash -lc 'emerge -v dev-cpp/userver'
 
-      # ---------- Build and test userver service ----------
-      - name: Build and test userver service
+      # ---------- Create non-root user in container ----------
+      - name: Create non-root user in container
         run: |
           docker exec gentoo-test bash -lc '
             set -e
-            cd /root
+            getent group tester >/dev/null || groupadd tester
+            id tester || useradd -m -s /bin/bash -g tester tester
+            mkdir -p /home/tester
+            chown -R tester:tester /home/tester
+          '
+
+
+      # ---------- Build and test userver service ----------
+      - name: Build and test userver service
+        run: |
+          docker exec --user tester gentoo-test bash -lc '
+            set -e
+            cd /home/tester
             userver-create-service myservice
             cd myservice
             echo ">>> Build and run tests"
@@ -213,6 +225,7 @@ jobs:
               exit 1
             fi
             kill $PID || true
+            wait $PID || true
           '
 
       # ---------- Debug info ----------
