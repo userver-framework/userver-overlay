@@ -112,7 +112,7 @@ KEYWORDS="amd64"
 
 #IUSE="grpc grpc-reflection postgres redis redistls mongodb mysql clickhouse rabbitmq kafka rocksdb opentelemetry s3api ydb utest testsuite easy odbc uboost-coro sqlite"
 
-IUSE="postgres redis mongodb mysql rabbitmq kafka utest testsuite easy odbc uboost-coro sqlite"
+IUSE="postgres redis mongodb mysql rabbitmq kafka utest testsuite easy odbc +uboost-coro sqlite"
 
 #REQUIRED_USE=(
 #	"grpc-reflection? ( grpc )"
