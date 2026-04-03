@@ -9,13 +9,13 @@ HOMEPAGE="https://github.com/userver-framework/userver"
 
 inherit pypi
 
-MAIN_SRC="v2.15.tar.gz"
+MAIN_SRC="v2.16.tar.gz"
 
 PYTHON_LIBS=(
   "wheel 0.46.3"
   "typing-extensions 4.15.0"
   "sqlparse 0.5.5"
-  "redis 7.1.0"
+  "redis 7.4.0"
   "PyMySQL 1.1.2"
   "pygments 2.19.2"
   "propcache 0.4.1"
@@ -32,6 +32,7 @@ PYTHON_LIBS=(
   "async-timeout 5.0.1"
   "aiohappyeyeballs 2.6.1"
   "yarl 1.22.0"
+  "yandex-pgmigrate 1.0.10"
   "pytest 9.0.2"
   "aiosignal 1.4.0"
 # "aiokafka 0.13.0" (pypi mistake)
@@ -67,7 +68,6 @@ PYTHON_SDIST_LIBS=(
   "psycopg2 2.9.11"
   "python-redis 0.4.0"
   "aiokafka 0.13.0"
-  "yandex-pgmigrate 1.0.12"
 )
 
 SRC_URI="https://github.com/userver-framework/userver/archive/refs/tags/${MAIN_SRC} -> userver-framework-${MAIN_SRC} https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
@@ -130,7 +130,7 @@ DEPEND="${RDEPEND}"
 BDEPEND=""
 
 src_unpack(){
-    unpack "${DISTDIR}/userver-framework-${MAIN_SRC}" || die "unable to unpack source code"
+    unpack "${DISTDIR}/${MAIN_SRC}" || die "unable to unpack source code"
     cd "${S}" || die "unable to enter source code directory"
 
     # Создаём директорию third_party

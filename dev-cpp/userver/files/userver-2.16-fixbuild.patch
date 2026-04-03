@@ -1,0 +1,1977 @@
+From 2da430860ce7839fa12596af895dc154ffa8bace Mon Sep 17 00:00:00 2001
+From: lexeyo <lexeyo@yandex-team.com>
+Date: Tue, 31 Mar 2026 21:27:59 +0300
+Subject: [PATCH 01/12] feat docs: start 3.0
+ commit_hash:f2bb3f59fa694d2e4977795f01aad4c5b254af5e
+
+---
+ version.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/version.txt b/version.txt
+index 6d28a11dd..dbac74269 100644
+--- a/version.txt
++++ b/version.txt
+@@ -1 +1 @@
+-2.16
++3.0-rc
+-- 
+2.52.0
+
+
+From 211dcb8acd93146c1e5485c78d43136eb73be774 Mon Sep 17 00:00:00 2001
+From: kenny1847 <kenny1847@yandex-team.com>
+Date: Tue, 31 Mar 2026 23:56:22 +0300
+Subject: [PATCH 02/12] feat ydb: extend integer types support
+
+Added support for `std::[u]int8_t` and `std::[u]int16_t` to userver YDB IO.
+
+Tests: CI
+commit_hash:af103b5c95c63accfbf3e97e89daefa389e278fd
+---
+ ydb/include/userver/ydb/io/primitives.hpp     | 52 +++++++++++++++++++
+ .../userver/ydb/io/supported_types.hpp        |  4 ++
+ ydb/include/userver/ydb/types.hpp             | 16 ++++--
+ ydb/src/ydb/impl/type_category.hpp            | 12 +++++
+ ydb/src/ydb/io/primitives.cpp                 | 40 ++++++++++++++
+ 5 files changed, 120 insertions(+), 4 deletions(-)
+
+diff --git a/ydb/include/userver/ydb/io/primitives.hpp b/ydb/include/userver/ydb/io/primitives.hpp
+index 177dcc2dc..8880682fa 100644
+--- a/ydb/include/userver/ydb/io/primitives.hpp
++++ b/ydb/include/userver/ydb/io/primitives.hpp
+@@ -57,6 +57,34 @@ struct BoolTrait {
+     static void Write(NYdb::TValueBuilderBase<Builder>& builder, Type value);
+ };
+ 
++struct Int8Trait {
++    using Type = std::int8_t;
++    static Type Parse(const NYdb::TValueParser& value_parser);
++    template <typename Builder>
++    static void Write(NYdb::TValueBuilderBase<Builder>& builder, Type value);
++};
++
++struct Uint8Trait {
++    using Type = std::uint8_t;
++    static Type Parse(const NYdb::TValueParser& value_parser);
++    template <typename Builder>
++    static void Write(NYdb::TValueBuilderBase<Builder>& builder, Type value);
++};
++
++struct Int16Trait {
++    using Type = std::int16_t;
++    static Type Parse(const NYdb::TValueParser& value_parser);
++    template <typename Builder>
++    static void Write(NYdb::TValueBuilderBase<Builder>& builder, Type value);
++};
++
++struct Uint16Trait {
++    using Type = std::uint16_t;
++    static Type Parse(const NYdb::TValueParser& value_parser);
++    template <typename Builder>
++    static void Write(NYdb::TValueBuilderBase<Builder>& builder, Type value);
++};
++
+ struct Int32Trait {
+     using Type = std::int32_t;
+     static Type Parse(const NYdb::TValueParser& value_parser);
+@@ -200,6 +228,30 @@ struct ValueTraits<std::optional<Int32Trait::Type>> : OptionalPrimitiveTraits<In
+ template <>
+ struct ValueTraits<Int32Trait::Type> : PrimitiveTraits<Int32Trait> {};
+ 
++template <>
++struct ValueTraits<std::optional<Uint16Trait::Type>> : OptionalPrimitiveTraits<Uint16Trait> {};
++
++template <>
++struct ValueTraits<Uint16Trait::Type> : PrimitiveTraits<Uint16Trait> {};
++
++template <>
++struct ValueTraits<std::optional<Int16Trait::Type>> : OptionalPrimitiveTraits<Int16Trait> {};
++
++template <>
++struct ValueTraits<Int16Trait::Type> : PrimitiveTraits<Int16Trait> {};
++
++template <>
++struct ValueTraits<std::optional<Uint8Trait::Type>> : OptionalPrimitiveTraits<Uint8Trait> {};
++
++template <>
++struct ValueTraits<Uint8Trait::Type> : PrimitiveTraits<Uint8Trait> {};
++
++template <>
++struct ValueTraits<std::optional<Int8Trait::Type>> : OptionalPrimitiveTraits<Int8Trait> {};
++
++template <>
++struct ValueTraits<Int8Trait::Type> : PrimitiveTraits<Int8Trait> {};
++
+ template <>
+ struct ValueTraits<std::optional<BoolTrait::Type>> : OptionalPrimitiveTraits<BoolTrait> {};
+ 
+diff --git a/ydb/include/userver/ydb/io/supported_types.hpp b/ydb/include/userver/ydb/io/supported_types.hpp
+index 07b10c67b..e92339d2f 100644
+--- a/ydb/include/userver/ydb/io/supported_types.hpp
++++ b/ydb/include/userver/ydb/io/supported_types.hpp
+@@ -4,6 +4,10 @@
+ ///
+ /// Available primitive types:
+ ///  * ValueType::Bool,        bool
++///  * ValueType::Int8,        std::int8_t
++///  * ValueType::UInt8,       std::uint8_t
++///  * ValueType::Int16,       std::int16_t
++///  * ValueType::UInt16,      std::uint16_t
+ ///  * ValueType::Int32,       std::int32_t
+ ///  * ValueType::Uint32,      std::uint32_t
+ ///  * ValueType::Int64,       std::int64_t
+diff --git a/ydb/include/userver/ydb/types.hpp b/ydb/include/userver/ydb/types.hpp
+index c2948a27a..7266650d4 100644
+--- a/ydb/include/userver/ydb/types.hpp
++++ b/ydb/include/userver/ydb/types.hpp
+@@ -17,10 +17,10 @@ namespace ydb {
+  * YDB type      | C++ type
+  * ------------------------------
+  * Bool          | bool
+- * Int8          | N/A
+- * Uint8         | N/A
+- * Int16         | N/A
+- * Uint16        | N/A
++ * Int8          | std::int8_t
++ * Uint8         | std::uint8_t
++ * Int16         | std::int16_t
++ * Uint16        | std::uint16_t
+  * Int32         | std::int32_t
+  * Uint32        | std::uint32_t
+  * Int64         | std::int64_t
+@@ -55,6 +55,10 @@ using JsonDocument = utils::StrongTypedef<JsonDocumentTag, formats::json::Value>
+ using InsertColumnValue = std::variant<
+     std::string,
+     bool,
++    std::int8_t,
++    std::uint8_t,
++    std::int16_t,
++    std::uint16_t,
+     std::int32_t,
+     std::uint32_t,
+     std::int64_t,
+@@ -64,6 +68,10 @@ using InsertColumnValue = std::variant<
+     Timestamp,
+     std::optional<std::string>,
+     std::optional<bool>,
++    std::optional<std::int8_t>,
++    std::optional<std::uint8_t>,
++    std::optional<std::int16_t>,
++    std::optional<std::uint16_t>,
+     std::optional<std::int32_t>,
+     std::optional<std::uint32_t>,
+     std::optional<std::int64_t>,
+diff --git a/ydb/src/ydb/impl/type_category.hpp b/ydb/src/ydb/impl/type_category.hpp
+index c979b5b48..ae5cec1ce 100644
+--- a/ydb/src/ydb/impl/type_category.hpp
++++ b/ydb/src/ydb/impl/type_category.hpp
+@@ -23,6 +23,18 @@ inline constexpr auto kTypeCategory = UndefinedTypeCategory{};
+ template <>
+ inline constexpr auto kTypeCategory<bool> = NYdb::EPrimitiveType::Bool;
+ 
++template <>
++inline constexpr auto kTypeCategory<std::int8_t> = NYdb::EPrimitiveType::Int8;
++
++template <>
++inline constexpr auto kTypeCategory<std::uint8_t> = NYdb::EPrimitiveType::Uint8;
++
++template <>
++inline constexpr auto kTypeCategory<std::int16_t> = NYdb::EPrimitiveType::Int16;
++
++template <>
++inline constexpr auto kTypeCategory<std::uint16_t> = NYdb::EPrimitiveType::Uint16;
++
+ template <>
+ inline constexpr auto kTypeCategory<std::int32_t> = NYdb::EPrimitiveType::Int32;
+ 
+diff --git a/ydb/src/ydb/io/primitives.cpp b/ydb/src/ydb/io/primitives.cpp
+index c0af500a9..af6d65c1b 100644
+--- a/ydb/src/ydb/io/primitives.cpp
++++ b/ydb/src/ydb/io/primitives.cpp
+@@ -155,6 +155,46 @@ void BoolTrait::Write(NYdb::TValueBuilderBase<Builder>& builder, Type value) {
+     builder.Bool(value);
+ }
+ 
++template struct OptionalPrimitiveTraits<Int8Trait>;
++template struct PrimitiveTraits<Int8Trait>;
++
++Int8Trait::Type Int8Trait::Parse(const NYdb::TValueParser& value_parser) { return value_parser.GetInt8(); }
++
++template <typename Builder>
++void Int8Trait::Write(NYdb::TValueBuilderBase<Builder>& builder, Type value) {
++    builder.Int8(value);
++}
++
++template struct OptionalPrimitiveTraits<Uint8Trait>;
++template struct PrimitiveTraits<Uint8Trait>;
++
++Uint8Trait::Type Uint8Trait::Parse(const NYdb::TValueParser& value_parser) { return value_parser.GetUint8(); }
++
++template <typename Builder>
++void Uint8Trait::Write(NYdb::TValueBuilderBase<Builder>& builder, Type value) {
++    builder.Uint8(value);
++}
++
++template struct OptionalPrimitiveTraits<Int16Trait>;
++template struct PrimitiveTraits<Int16Trait>;
++
++Int16Trait::Type Int16Trait::Parse(const NYdb::TValueParser& value_parser) { return value_parser.GetInt16(); }
++
++template <typename Builder>
++void Int16Trait::Write(NYdb::TValueBuilderBase<Builder>& builder, Type value) {
++    builder.Int16(value);
++}
++
++template struct OptionalPrimitiveTraits<Uint16Trait>;
++template struct PrimitiveTraits<Uint16Trait>;
++
++Uint16Trait::Type Uint16Trait::Parse(const NYdb::TValueParser& value_parser) { return value_parser.GetUint16(); }
++
++template <typename Builder>
++void Uint16Trait::Write(NYdb::TValueBuilderBase<Builder>& builder, Type value) {
++    builder.Uint16(value);
++}
++
+ template struct OptionalPrimitiveTraits<Int32Trait>;
+ template struct PrimitiveTraits<Int32Trait>;
+ 
+-- 
+2.52.0
+
+
+From e09d730acbc8d33ca6bdac42e4253100891d0443 Mon Sep 17 00:00:00 2001
+From: ilgarsh <ilgarsh@yandex-team.com>
+Date: Wed, 1 Apr 2026 01:25:39 +0300
+Subject: [PATCH 03/12] feat dynamic-configs: add circuit overrides
+
+add circuit overrides
+commit_hash:811234950b6d50264f81f25d58413535066aee44
+---
+ .../userver/dynamic_config/client/client.hpp  |  1 +
+ core/src/clients/config/client.cpp            |  5 +++
+ core/src/dynamic_config/client/component.cpp  | 39 ++++++++++++++++---
+ 3 files changed, 39 insertions(+), 6 deletions(-)
+
+diff --git a/core/include/userver/dynamic_config/client/client.hpp b/core/include/userver/dynamic_config/client/client.hpp
+index 1c05daf69..7951c7fd6 100644
+--- a/core/include/userver/dynamic_config/client/client.hpp
++++ b/core/include/userver/dynamic_config/client/client.hpp
+@@ -25,6 +25,7 @@ struct ClientConfig {
+     bool append_path_to_url{true};
+     std::string stage_name;
+     bool is_prestable{false};
++    std::string circuit;
+ };
+ 
+ /// @ingroup userver_clients
+diff --git a/core/src/clients/config/client.cpp b/core/src/clients/config/client.cpp
+index 8be6230b5..4574f1ac9 100644
+--- a/core/src/clients/config/client.cpp
++++ b/core/src/clients/config/client.cpp
+@@ -95,6 +95,11 @@ formats::json::Value Client::FetchConfigs(
+             body.Key("is_prestable");
+             WriteToStream(true, body);
+         }
++
++        if (!config_.circuit.empty()) {
++            body.Key("circuit");
++            WriteToStream(config_.circuit, body);
++        }
+     }
+ 
+     LOG_TRACE() << "request body: " << body.GetStringView();
+diff --git a/core/src/dynamic_config/client/component.cpp b/core/src/dynamic_config/client/component.cpp
+index 68711475a..a9adc8363 100644
+--- a/core/src/dynamic_config/client/component.cpp
++++ b/core/src/dynamic_config/client/component.cpp
+@@ -31,19 +31,45 @@ std::string ReadStageName(const std::string& filepath) {
+ }
+ 
+ #ifdef ARCADIA_ROOT
+-bool IsClownductorPrestable() {
+-    constexpr std::string_view filepath = "/etc/clownductor_group";
++std::optional<std::string> ReadFile(std::string_view filepath) {
+     auto& tp = engine::current_task::GetBlockingTaskProcessor();
++    const std::string filepath_str{filepath};
++    if (!fs::FileExists(tp, filepath_str)) {
++        return std::nullopt;
++    }
++
++    return fs::ReadFileContents(tp, filepath_str);
++}
+ 
+-    if (!fs::FileExists(tp, std::string{filepath})) {
++bool IsClownductorPrestable() {
++    auto content = ReadFile("/etc/clownductor_group");
++    if (!content) {
+         return false;
+     }
+-    auto content = fs::ReadFileContents(tp, std::string{filepath});
+-    utils::text::Trim(content);
+-    return utils::text::EndsWith(content, "_pre_stable") || utils::text::EndsWith(content, "_prestable");
++
++    utils::text::Trim(*content);
++    return utils::text::EndsWith(*content, "_pre_stable") || utils::text::EndsWith(*content, "_prestable");
++}
++
++std::string ReadCircuit() {
++    constexpr std::string_view kCircuitPrefix = "UPLATFORM_CIRCUIT=";
++
++    const auto content = ReadFile("/etc/uplatform_environment");
++    if (!content) {
++        return {};
++    }
++
++    for (const auto line : utils::text::SplitIntoStringViewVector(*content, "\n")) {
++        const auto trimmed_line = utils::text::TrimView(line);
++        if (utils::text::StartsWith(trimmed_line, kCircuitPrefix)) {
++            return std::string{trimmed_line.substr(kCircuitPrefix.size())};
++        }
++    }
++    return {};
+ }
+ #else
+ bool IsClownductorPrestable() { return false; }
++std::string ReadCircuit() { return {}; }
+ #endif
+ 
+ }  // namespace
+@@ -67,6 +93,7 @@ DynamicConfigClient::DynamicConfigClient(const ComponentConfig& config, const Co
+         }
+     }
+     client_config.is_prestable = IsClownductorPrestable();
++    client_config.circuit = ReadCircuit();
+     client_config.config_url = config["config-url"].As<std::string>();
+ 
+     if (!client_config.stage_name.empty() && client_config.get_configs_overrides_for_service) {
+-- 
+2.52.0
+
+
+From 18106efe8b361f7fd4a38c6294e11ae95be8d280 Mon Sep 17 00:00:00 2001
+From: antoshkka <antoshkka@userver.tech>
+Date: Wed, 1 Apr 2026 11:56:46 +0300
+Subject: [PATCH 04/12] feat build: drop C++17 support
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Tests: протестировано CI
+commit_hash:e180290a3ea82b3c534100f3b1edc6463ec5ed0b
+---
+ .github/workflows/alpine.yml                   |  2 +-
+ .github/workflows/archlinux.yml                |  2 +-
+ .github/workflows/ci.yml                       |  8 ++++----
+ .github/workflows/debian.yml                   |  2 +-
+ .github/workflows/docker.yaml                  | 18 +++++++++---------
+ .github/workflows/fedora.yml                   |  2 +-
+ .github/workflows/macos.yml                    |  2 +-
+ .github/workflows/ubuntu-minimal.yml           |  2 +-
+ CMakeLists.txt                                 |  6 +-----
+ cmake/UserverRequireDWCAS.cmake                |  2 +-
+ cmake/UserverSetupEnvironment.cmake            |  5 +++++
+ scripts/docker/base-ubuntu-22.04-ci.dockerfile |  2 +-
+ scripts/docker/ubuntu_install_grpc.sh          |  2 +-
+ third_party/librseq/CMakeLists.txt             |  2 +-
+ universal/CMakeLists.txt                       | 11 ++---------
+ ydb/CMakeLists.txt                             |  6 ------
+ 16 files changed, 31 insertions(+), 43 deletions(-)
+
+diff --git a/.github/workflows/alpine.yml b/.github/workflows/alpine.yml
+index 8f950adce..895c262f8 100644
+--- a/.github/workflows/alpine.yml
++++ b/.github/workflows/alpine.yml
+@@ -29,7 +29,7 @@ jobs:
+             CMAKE_PROGRAM_PATH: /usr/lib/llvm19/bin
+             CMAKE_FLAGS: >-
+                 -DCMAKE_BUILD_TYPE=Debug
+-                -DCMAKE_CXX_STANDARD=17
++                -DCMAKE_CXX_STANDARD=20
+                 -DUSERVER_USE_LD=lld
+                 -DUSERVER_NO_WERROR=OFF
+                 -DUSERVER_BUILD_ALL_COMPONENTS=1
+diff --git a/.github/workflows/archlinux.yml b/.github/workflows/archlinux.yml
+index 781f9c67a..ae167e2dd 100644
+--- a/.github/workflows/archlinux.yml
++++ b/.github/workflows/archlinux.yml
+@@ -30,7 +30,7 @@ jobs:
+         env:
+             CMAKE_FLAGS: >-
+                 -DCMAKE_BUILD_TYPE=Debug
+-                -DCMAKE_CXX_STANDARD=17
++                -DCMAKE_CXX_STANDARD=20
+                 -DUSERVER_USE_LD=lld
+                 -DUSERVER_NO_WERROR=1
+                 -DUSERVER_BUILD_ALL_COMPONENTS=1
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 6a763d17f..442527e6a 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -28,7 +28,7 @@ jobs:
+                         -DCMAKE_CXX_COMPILER=clang++-18
+                         -DCMAKE_C_COMPILER=clang-18
+                         -DCMAKE_BUILD_TYPE=Debug
+-                        -DCMAKE_CXX_STANDARD=17
++                        -DCMAKE_CXX_STANDARD=20
+                         -DUSERVER_SANITIZE="ub addr"
+                         -DUSERVER_NO_WERROR=0
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+@@ -51,7 +51,7 @@ jobs:
+                         -DCMAKE_CXX_COMPILER=g++-13
+                         -DCMAKE_C_COMPILER=gcc-13
+                         -DCMAKE_BUILD_TYPE=Release
+-                        -DCMAKE_CXX_STANDARD=17
++                        -DCMAKE_CXX_STANDARD=20
+                         -DUSERVER_SANITIZE=""
+                         -DUSERVER_NO_WERROR=1
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+@@ -68,7 +68,7 @@ jobs:
+                         -DCMAKE_CXX_COMPILER=clang++-14
+                         -DCMAKE_C_COMPILER=clang-14
+                         -DCMAKE_BUILD_TYPE=Debug
+-                        -DCMAKE_CXX_STANDARD=17
++                        -DCMAKE_CXX_STANDARD=20
+                         -DUSERVER_SANITIZE="ub addr"
+                         -DUSERVER_NO_WERROR=0
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+@@ -90,7 +90,7 @@ jobs:
+                         -DCMAKE_CXX_COMPILER=g++-10
+                         -DCMAKE_C_COMPILER=gcc-10
+                         -DCMAKE_BUILD_TYPE=Release
+-                        -DCMAKE_CXX_STANDARD=17
++                        -DCMAKE_CXX_STANDARD=20
+                         -DUSERVER_USE_LD=gold
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+                         -DUSERVER_BUILD_SAMPLES=1
+diff --git a/.github/workflows/debian.yml b/.github/workflows/debian.yml
+index 48de296a4..8332562eb 100644
+--- a/.github/workflows/debian.yml
++++ b/.github/workflows/debian.yml
+@@ -61,7 +61,7 @@ jobs:
+         env:
+             CMAKE_FLAGS: >-
+                 -DCMAKE_BUILD_TYPE=Debug
+-                -DCMAKE_CXX_STANDARD=17
++                -DCMAKE_CXX_STANDARD=20
+                 -DUSERVER_USE_LD=lld
+                 -DUSERVER_NO_WERROR=OFF
+                 -DUSERVER_BUILD_ALL_COMPONENTS=1
+diff --git a/.github/workflows/docker.yaml b/.github/workflows/docker.yaml
+index 7d139275f..9f3771c6c 100644
+--- a/.github/workflows/docker.yaml
++++ b/.github/workflows/docker.yaml
+@@ -15,7 +15,7 @@ jobs:
+             matrix:
+                 include:
+                   - cmake-flags: >-
+-                        -DCMAKE_CXX_STANDARD=17
++                        -DCMAKE_CXX_STANDARD=20
+                         -DCPM_SOURCE_CACHE=/userver/.cpm
+                         -DUSERVER_USE_LD=gold
+                         -DUSERVER_NO_WERROR=0
+@@ -25,12 +25,12 @@ jobs:
+                         -DCMAKE_BUILD_TYPE=Release
+                     gtest-filter: '*'
+                     image: ubuntu-22.04-userver-base
+-                    info: ubuntu + gcc + cxx17 + core
+-                    id: ubuntu_gcc_cxx17_core
++                    info: ubuntu + gcc + cxx20 + core
++                    id: ubuntu_gcc_cxx20_core
+                   - cmake-flags: >-
+                         -DCMAKE_C_COMPILER=clang-16
+                         -DCMAKE_CXX_COMPILER=clang++-16
+-                        -DCMAKE_CXX_STANDARD=17
++                        -DCMAKE_CXX_STANDARD=20
+                         -DCPM_SOURCE_CACHE=/userver/.cpm
+                         -DUSERVER_NO_WERROR=0
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+@@ -40,12 +40,12 @@ jobs:
+                         -DCMAKE_BUILD_TYPE=Release
+                     gtest-filter: '*'
+                     image: ubuntu-22.04-userver-base-ci
+-                    info: ubuntu + clang-16 + cxx17
+-                    id: ubuntu_clang16_cxx17
++                    info: ubuntu + clang-16 + cxx20
++                    id: ubuntu_clang16_cxx20
+                   - cmake-flags: >-
+                         -DCMAKE_C_COMPILER=gcc-11
+                         -DCMAKE_CXX_COMPILER=g++-11
+-                        -DCMAKE_CXX_STANDARD=17
++                        -DCMAKE_CXX_STANDARD=20
+                         -DCPM_SOURCE_CACHE=/userver/.cpm
+                         -DUSERVER_USE_LD=gold
+                         -DUSERVER_NO_WERROR=0
+@@ -56,8 +56,8 @@ jobs:
+                         -DCMAKE_BUILD_TYPE=Release
+                     gtest-filter: '*'
+                     image: ubuntu-22.04-userver-base-ci
+-                    info: ubuntu + gcc-11 + cxx17
+-                    id: ubuntu_gcc11_cxx17
++                    info: ubuntu + gcc-11 + cxx20
++                    id: ubuntu_gcc11_cxx20
+                   - cmake-flags: >-
+                         -DCMAKE_C_COMPILER=clang-16
+                         -DCMAKE_CXX_COMPILER=clang++-16
+diff --git a/.github/workflows/fedora.yml b/.github/workflows/fedora.yml
+index 4bf972c9a..2b44ad9a7 100644
+--- a/.github/workflows/fedora.yml
++++ b/.github/workflows/fedora.yml
+@@ -35,7 +35,7 @@ jobs:
+         env:
+             CMAKE_FLAGS: >-
+                 -DCMAKE_BUILD_TYPE=Debug
+-                -DCMAKE_CXX_STANDARD=17
++                -DCMAKE_CXX_STANDARD=20
+                 -DUSERVER_USE_LD=lld
+                 -DUSERVER_BUILD_ALL_COMPONENTS=1
+                 -DUSERVER_BUILD_SAMPLES=1
+diff --git a/.github/workflows/macos.yml b/.github/workflows/macos.yml
+index 082ed48ee..797ee9982 100644
+--- a/.github/workflows/macos.yml
++++ b/.github/workflows/macos.yml
+@@ -25,7 +25,7 @@ jobs:
+             CMAKE_FLAGS: >-
+                 -GNinja
+                 -DCMAKE_BUILD_TYPE=Debug
+-                -DCMAKE_CXX_STANDARD=17
++                -DCMAKE_CXX_STANDARD=20
+                 -DUSERVER_NO_WERROR=1
+                 -DUSERVER_BUILD_ALL_COMPONENTS=1
+                 -DUSERVER_BUILD_SAMPLES=1
+diff --git a/.github/workflows/ubuntu-minimal.yml b/.github/workflows/ubuntu-minimal.yml
+index 59b6d4c7b..089d4900a 100644
+--- a/.github/workflows/ubuntu-minimal.yml
++++ b/.github/workflows/ubuntu-minimal.yml
+@@ -24,7 +24,7 @@ jobs:
+         env:
+             CMAKE_FLAGS: >-
+                 -DCMAKE_BUILD_TYPE=Debug
+-                -DCMAKE_CXX_STANDARD=17
++                -DCMAKE_CXX_STANDARD=20
+                 -DUSERVER_SANITIZE="ub addr"
+                 -DUSERVER_BUILD_SAMPLES=1
+                 -DUSERVER_BUILD_TESTS=1
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 14f21044e..0b7a7acc7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -88,11 +88,7 @@ if(USERVER_FEATURE_CORE
+ endif()
+ 
+ set(USERVER_YDB_DEFAULT OFF)
+-if(USERVER_FEATURE_CORE
+-   AND USERVER_BUILD_ALL_COMPONENTS
+-   AND DEFINED CMAKE_CXX_STANDARD
+-   AND CMAKE_CXX_STANDARD GREATER_EQUAL 20
+-)
++if(USERVER_FEATURE_CORE AND USERVER_BUILD_ALL_COMPONENTS)
+     set(USERVER_YDB_DEFAULT ON)
+ endif()
+ 
+diff --git a/cmake/UserverRequireDWCAS.cmake b/cmake/UserverRequireDWCAS.cmake
+index 57979e274..7d3a7d403 100644
+--- a/cmake/UserverRequireDWCAS.cmake
++++ b/cmake/UserverRequireDWCAS.cmake
+@@ -17,7 +17,7 @@ function(userver_target_require_dwcas target visibility)
+         return()
+     endif()
+ 
+-    set(CMAKE_CXX_STANDARD 17)
++    set(CMAKE_CXX_STANDARD 20)
+     set(TEST_DEFINITIONS)
+     set(TEST_LIBRARIES)
+ 
+diff --git a/cmake/UserverSetupEnvironment.cmake b/cmake/UserverSetupEnvironment.cmake
+index f2bfb54dd..4e1e07da0 100644
+--- a/cmake/UserverSetupEnvironment.cmake
++++ b/cmake/UserverSetupEnvironment.cmake
+@@ -68,6 +68,11 @@ function(_userver_setup_environment_impl)
+             PARENT_SCOPE
+         )
+     endif()
++
++    if(CMAKE_CXX_STANDARD LESS 20)
++        message(FATAL_ERROR "userver requires CMAKE_CXX_STANDARD >= 20 (got: ${CMAKE_CXX_STANDARD})")
++    endif()
++
+     message(STATUS "C++ standard ${CMAKE_CXX_STANDARD}")
+     set(CMAKE_CXX_STANDARD_REQUIRED
+         ON
+diff --git a/scripts/docker/base-ubuntu-22.04-ci.dockerfile b/scripts/docker/base-ubuntu-22.04-ci.dockerfile
+index bb33c9e0f..9b3124899 100644
+--- a/scripts/docker/base-ubuntu-22.04-ci.dockerfile
++++ b/scripts/docker/base-ubuntu-22.04-ci.dockerfile
+@@ -22,7 +22,7 @@ RUN \
+     rabbitmq-server \
+     redis-server \
+     clang-16 lld-16 llvm-16 clang-format-16 libclang-rt-16-dev\
+-    clang-14 lld-14 llvm clang-format-18 \
++    clang-15 lld-15 llvm-15 clang-format-18 \
+     g++-10 gcc-10 \
+     g++-11 gcc-11 \
+     g++-13 gcc-13 \
+diff --git a/scripts/docker/ubuntu_install_grpc.sh b/scripts/docker/ubuntu_install_grpc.sh
+index 9a4c15663..c2e57af39 100755
+--- a/scripts/docker/ubuntu_install_grpc.sh
++++ b/scripts/docker/ubuntu_install_grpc.sh
+@@ -26,7 +26,7 @@ git clone --recurse-submodules -b ${GRPC_VERSION} --depth 1 --shallow-submodules
+   cmake \
+     -DgRPC_INSTALL=ON \
+     -DgRPC_BUILD_TESTS=OFF \
+-    -DCMAKE_CXX_STANDARD=17 \
++    -DCMAKE_CXX_STANDARD=20 \
+     -DCMAKE_INSTALL_PREFIX=/usr \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+diff --git a/third_party/librseq/CMakeLists.txt b/third_party/librseq/CMakeLists.txt
+index af92e01d1..03177c4b4 100644
+--- a/third_party/librseq/CMakeLists.txt
++++ b/third_party/librseq/CMakeLists.txt
+@@ -5,7 +5,7 @@ set(SOURCES src/rseq.c src/rseq-mempool.c src/smp.c)
+ add_library(${PROJECT_NAME} OBJECT ${SOURCES})
+ 
+ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+-target_compile_options(${PROJECT_NAME} PRIVATE -Wno-implicit-function-declaration)
++target_compile_options(${PROJECT_NAME} PRIVATE -Wno-implicit-function-declaration -Wno-error=pedantic)
+ target_compile_definitions(${PROJECT_NAME} PRIVATE _GNU_SOURCE)
+ set_target_properties(${PROJECT_NAME} PROPERTIES C_EXTENSIONS ON)
+ _userver_install_targets(COMPONENT core TARGETS ${PROJECT_NAME})
+diff --git a/universal/CMakeLists.txt b/universal/CMakeLists.txt
+index 213165c08..e8b6e73a3 100644
+--- a/universal/CMakeLists.txt
++++ b/universal/CMakeLists.txt
+@@ -58,13 +58,8 @@ endif()
+ # cmake/UserverSetupEnvironment.cmake
+ add_library(userver-internal-compile-options INTERFACE)
+ userver_target_require_dwcas(userver-internal-compile-options INTERFACE)
+-target_compile_features(userver-internal-compile-options INTERFACE cxx_std_17)
+-target_compile_options(userver-internal-compile-options INTERFACE "-Wall" "-Wextra")
+-
+-# as alternative for -Wno-gnu-zero-variadic-macro-arguments
+-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_STANDARD GREATER_EQUAL 20)
+-    target_compile_options(userver-internal-compile-options INTERFACE "-Wpedantic")
+-endif()
++target_compile_features(userver-internal-compile-options INTERFACE cxx_std_20)
++target_compile_options(userver-internal-compile-options INTERFACE "-Wall" "-Wextra" "-Wpedantic")
+ 
+ include(UserverCxxCompileOptionsIfSupported)
+ userver_target_cxx_compile_options_if_supported(
+@@ -80,8 +75,6 @@ userver_target_cxx_compile_options_if_supported(
+     "-Wno-error=deprecated-declarations"
+     # This warning is unavoidable in generic code with templates
+     "-Wno-useless-cast"
+-    # Starting from C++20, passing zero arguments to a variadic macro parameter is allowed
+-    "-Wno-gnu-zero-variadic-macro-arguments"
+     # gcc complains: the ABI of passing union with ‘long double’ has changed in GCC 4.4
+     "-Wno-psabi"
+ )
+diff --git a/ydb/CMakeLists.txt b/ydb/CMakeLists.txt
+index 70dc3748c..f1e715643 100644
+--- a/ydb/CMakeLists.txt
++++ b/ydb/CMakeLists.txt
+@@ -28,12 +28,6 @@ userver_module(
+     EMBED_FILES src/ydb/component.yaml src/ydb/dist_lock/component_base.yaml
+ )
+ 
+-# Enforce that userver-ydb requires C++20
+-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+-if(CMAKE_CXX_STANDARD LESS 20)
+-    message(FATAL_ERROR "YDB driver requires CMAKE_CXX_STANDARD >= 20 (got: ${CMAKE_CXX_STANDARD})")
+-endif()
+-
+ _userver_directory_install(
+     COMPONENT ydb
+     FILES "${USERVER_ROOT_DIR}/cmake/SetupYdbCPPSDK.cmake"
+-- 
+2.52.0
+
+
+From 52a20803b9f5d37013e1e73c27a4baa795669677 Mon Sep 17 00:00:00 2001
+From: kopturovdim <kopturovdim@yandex-team.com>
+Date: Wed, 1 Apr 2026 13:46:45 +0300
+Subject: [PATCH 05/12] feat upg: add exception log when faild to cancel
+ request commit_hash:dd8b046b00c7be7582fba3c7335db24fc3c06044
+
+---
+ .../src/storages/postgres/detail/pg_connection_wrapper.cpp      | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/postgresql/src/storages/postgres/detail/pg_connection_wrapper.cpp b/postgresql/src/storages/postgres/detail/pg_connection_wrapper.cpp
+index 508881098..bfe4bea1b 100644
+--- a/postgresql/src/storages/postgres/detail/pg_connection_wrapper.cpp
++++ b/postgresql/src/storages/postgres/detail/pg_connection_wrapper.cpp
+@@ -294,7 +294,7 @@ engine::Task PGConnectionWrapper::Cancel() {
+         try {
+             detail::Cancel(cancel.get(), engine::Deadline::FromDuration(std::chrono::seconds(5)));
+         } catch (const std::exception& e) {
+-            PGCW_LOG_LIMITED_WARNING() << "Failed to cancel current request";
++            PGCW_LOG_LIMITED_WARNING() << "Failed to cancel current request: " << e;
+         }
+     });
+ }
+-- 
+2.52.0
+
+
+From ae0a15f355f775268d4234bce8c08c34e5a92e5c Mon Sep 17 00:00:00 2001
+From: antoshkka <antoshkka@userver.tech>
+Date: Wed, 1 Apr 2026 15:31:03 +0300
+Subject: [PATCH 06/12] feat docs: draw more attention to ParameterStore
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Tests: протестировано CI
+commit_hash:12ad079e8846e43999c43a6dddca16833df78a95
+---
+ .mapping.json                                 |  1 +
+ .../storages/postgres/parameter_store.hpp     |  2 +-
+ .../userver/storages/postgres/postgres.hpp    | 56 -------------------
+ .../userver/storages/postgres/transaction.hpp |  2 +-
+ scripts/docs/en/index.md                      |  2 +-
+ scripts/docs/en/userver/build/options.md      |  2 +-
+ .../docs/en/userver/framework_comparison.md   |  4 +-
+ scripts/docs/en/userver/lru_cache.md          |  2 +-
+ scripts/docs/en/userver/pg_driver.md          | 52 +++++++++++++++++
+ 9 files changed, 60 insertions(+), 63 deletions(-)
+ create mode 100644 scripts/docs/en/userver/pg_driver.md
+
+diff --git a/.mapping.json b/.mapping.json
+index 9c112e6b8..e46205f48 100644
+--- a/.mapping.json
++++ b/.mapping.json
+@@ -4634,6 +4634,7 @@
+   "scripts/docs/en/userver/os_signals.md":"taxi/uservices/userver/scripts/docs/en/userver/os_signals.md",
+   "scripts/docs/en/userver/periodics.md":"taxi/uservices/userver/scripts/docs/en/userver/periodics.md",
+   "scripts/docs/en/userver/pg_connlimit_mode_auto.md":"taxi/uservices/userver/scripts/docs/en/userver/pg_connlimit_mode_auto.md",
++  "scripts/docs/en/userver/pg_driver.md":"taxi/uservices/userver/scripts/docs/en/userver/pg_driver.md",
+   "scripts/docs/en/userver/pg_types.md":"taxi/uservices/userver/scripts/docs/en/userver/pg_types.md",
+   "scripts/docs/en/userver/pg_user_types.md":"taxi/uservices/userver/scripts/docs/en/userver/pg_user_types.md",
+   "scripts/docs/en/userver/profile_context_switches.md":"taxi/uservices/userver/scripts/docs/en/userver/profile_context_switches.md",
+diff --git a/postgresql/include/userver/storages/postgres/parameter_store.hpp b/postgresql/include/userver/storages/postgres/parameter_store.hpp
+index 137fd2e47..48d93d141 100644
+--- a/postgresql/include/userver/storages/postgres/parameter_store.hpp
++++ b/postgresql/include/userver/storages/postgres/parameter_store.hpp
+@@ -14,7 +14,7 @@ namespace storages::postgres {
+ 
+ /// @ingroup userver_containers
+ ///
+-/// @brief Class for dynamic PostgreSQL parameter list construction.
++/// @brief Class for dynamic PostgreSQL parameter list construction, allows query construction on the fly.
+ ///
+ /// Typical use case for this container is to keep parameters around while the
+ /// query is being constructed on the fly:
+diff --git a/postgresql/include/userver/storages/postgres/postgres.hpp b/postgresql/include/userver/storages/postgres/postgres.hpp
+index d629526ce..68aa08559 100644
+--- a/postgresql/include/userver/storages/postgres/postgres.hpp
++++ b/postgresql/include/userver/storages/postgres/postgres.hpp
+@@ -10,62 +10,6 @@
+ #include <userver/storages/postgres/result_set.hpp>
+ #include <userver/storages/postgres/transaction.hpp>
+ 
+-/// @page pg_driver uPg Driver
+-///
+-/// **Quality:** @ref QUALITY_TIERS "Platinum Tier".
+-///
+-/// 🐙 **userver** provides access to PostgreSQL database servers via
+-/// components::Postgres. The uPg driver is asynchronous, it suspends
+-/// current coroutine for carrying out network I/O.
+-///
+-/// @section features Features
+-/// - PostgreSQL cluster topology discovery;
+-/// - Manual cluster sharding (access to shard clusters by index);
+-/// - Connection pooling;
+-/// - Queries are transparently converted to prepared statements to use less
+-///   network on next execution, give the database more optimization freedom,
+-///   avoid the need for parameters escaping as the latter are now send
+-///   separately from the query;
+-/// - Automatic PgaaS topology discovery;
+-/// - Selecting query target (master/slave);
+-/// - Connection failover;
+-/// - Transaction support;
+-/// - Variadic template query parameter passing;
+-/// - Query result extraction to C++ types;
+-/// - More effective binary protocol usage for communication rather than the
+-///   libpq's text protocol;
+-/// - Caching the low-level database (D)escribe responses to save about a half
+-///   of network bandwidth on select statements that return multiple columns
+-///   (compared to the libpq implementation);
+-/// - Portals for effective background cache updates;
+-/// - Queries pipelining to execute multiple queries in one network roundtrip
+-///   (for example `begin + set transaction timeout + insert` result in one
+-///   roundtrip);
+-/// - Ability to manually control network roundtrips via
+-///   storages::postgres::QueryQueue to gain maximum efficiency
+-///   in case of multiple unrelated select statements;
+-/// - Mapping PostgreSQL user types to C++ types;
+-/// - Transaction error injection via pytest_userver.sql.RegisteredTrx;
+-/// - LISTEN/NOTIFY support via storages::postgres::Cluster::Listen();
+-/// - @ref scripts/docs/en/userver/deadline_propagation.md .
+-///
+-/// @section toc More information
+-/// - For configuration see components::Postgres
+-/// - For cluster topology see storages::postgres::Cluster
+-/// - @ref pg_transactions
+-/// - @ref pg_run_queries
+-/// - @ref pg_process_results
+-/// - @ref scripts/docs/en/userver/pg_types.md
+-/// - @ref scripts/docs/en/userver/pg_user_types.md
+-/// - @ref pg_errors
+-/// - @ref pg_topology
+-///
+-/// ----------
+-///
+-/// @htmlonly <div class="bottom-nav"> @endhtmlonly
+-/// ⇦ @ref scripts/docs/en/userver/lru_cache.md | @ref pg_transactions ⇨
+-/// @htmlonly </div> @endhtmlonly
+-
+ USERVER_NAMESPACE_BEGIN
+ 
+ namespace storages {
+diff --git a/postgresql/include/userver/storages/postgres/transaction.hpp b/postgresql/include/userver/storages/postgres/transaction.hpp
+index efd72c1a1..29d23db81 100644
+--- a/postgresql/include/userver/storages/postgres/transaction.hpp
++++ b/postgresql/include/userver/storages/postgres/transaction.hpp
+@@ -50,7 +50,7 @@ namespace storages::postgres {
+ /// ----------
+ ///
+ /// @htmlonly <div class="bottom-nav"> @endhtmlonly
+-/// ⇦ @ref pg_driver | @ref pg_run_queries ⇨
++/// ⇦ @ref scripts/docs/en/userver/pg_driver.md | @ref pg_run_queries ⇨
+ /// @htmlonly </div> @endhtmlonly
+ 
+ /// @page pg_run_queries uPg: Running queries
+diff --git a/scripts/docs/en/index.md b/scripts/docs/en/index.md
+index 65e178761..10531264c 100644
+--- a/scripts/docs/en/index.md
++++ b/scripts/docs/en/index.md
+@@ -148,7 +148,7 @@ and make sure that it builds and passes tests.
+ 
+ 
+ ## PostgreSQL
+-* @ref pg_driver
++* @ref scripts/docs/en/userver/pg_driver.md
+ * @ref pg_transactions
+ * @ref pg_run_queries
+ * @ref pg_process_results
+diff --git a/scripts/docs/en/userver/build/options.md b/scripts/docs/en/userver/build/options.md
+index 9445a9738..87bc205e2 100644
+--- a/scripts/docs/en/userver/build/options.md
++++ b/scripts/docs/en/userver/build/options.md
+@@ -17,7 +17,7 @@ userver is split into multiple CMake libraries.
+ | `userver::grpc`            | `USERVER_FEATURE_GRPC`                            | `grpc`                | @ref scripts/docs/en/userver/grpc/grpc.md                 |
+ | `userver::grpc-utest`      | `USERVER_FEATURE_GRPC` + `USERVER_FEATURE_UTEST`  | `grpc`                | @ref scripts/docs/en/userver/grpc/grpc.md                 |
+ | `userver::mongo`           | `USERVER_FEATURE_MONGODB`                         | `mongo`               | @ref scripts/docs/en/userver/mongodb.md                   |
+-| `userver::postgresql`      | `USERVER_FEATURE_POSTGRESQL`                      | `postgresql`          | @ref pg_driver                                            |
++| `userver::postgresql`      | `USERVER_FEATURE_POSTGRESQL`                      | `postgresql`          | @ref scripts/docs/en/userver/pg_driver.md                 |
+ | `userver::redis`           | `USERVER_FEATURE_REDIS`                           | `redis`               | @ref scripts/docs/en/userver/redis.md                     |
+ | `userver::redis-utest`     | `USERVER_FEATURE_REDIS` + `USERVER_FEATURE_UTEST` | `redis`               | @ref scripts/docs/en/userver/redis.md                     |
+ | `userver::clickhouse`      | `USERVER_FEATURE_CLICKHOUSE`                      | `clickhouse`          | @ref clickhouse_driver                                    |
+diff --git a/scripts/docs/en/userver/framework_comparison.md b/scripts/docs/en/userver/framework_comparison.md
+index 089719d67..326f678a0 100644
+--- a/scripts/docs/en/userver/framework_comparison.md
++++ b/scripts/docs/en/userver/framework_comparison.md
+@@ -28,8 +28,8 @@ use ❌ and ❓ respectively.
+ | Async HTTP server                      | ✔️ @ref components::Server "[↗]"                            | ✔️                     | ✔️                                        | ✔️                             | ✔️                               | ✔️ [[↗]][poco-net]      |
+ | Async gRPC client                      | ✔️ @ref scripts/docs/en/userver/grpc/grpc.md "[↗]"               | ✔️                     | ✔️                                        | ± third-party libs             | ❌                                | ❌                       |
+ | Async gRPC server                      | ✔️ @ref scripts/docs/en/userver/grpc/grpc.md "[↗]"               | ✔️                     | ✔️                                        | ± third-party libs             | ❌                                | ❌                       |
+-| Async PostgreSQL                       | ✔️ @ref pg_driver "[↗]"                                     | ± third-party driver   | ✔️ [[↗]][dapr-postgre]                    | ❌ [manual offloading][acti-db] | ✔️ [[↗]][drog-db]                | ✔️ [[↗]][poco-db]       |
+-| PostgreSQL pipelining, binary protocol | ✔️ @ref pg_driver "[↗]"                                     | ❌                      | ❌                                         | ± third-party libs             | ❌                                | ❓                       |
++| Async PostgreSQL                       | ✔️ @ref scripts/docs/en/userver/pg_driver.md "[↗]"               | ± third-party driver   | ✔️ [[↗]][dapr-postgre]                    | ❌ [manual offloading][acti-db] | ✔️ [[↗]][drog-db]                | ✔️ [[↗]][poco-db]       |
++| PostgreSQL pipelining, binary protocol | ✔️ @ref scripts/docs/en/userver/pg_driver.md "[↗]"               | ❌                      | ❌                                         | ± third-party libs             | ❌                                | ❓                       |
+ | Async Redis                            | ✔️ @ref scripts/docs/en/userver/redis.md "[↗]"              | ± third-party driver   | ✔️ [[↗]][dapr-redis]                      | ± third-party libs             | ✔️ [[↗]][drog-redis]             | ❓                       |
+ | Async Mongo                            | ✔️ @ref scripts/docs/en/userver/mongodb.md "[↗]"            | ± third-party driver   | ✔️ [[↗]][dapr-mongo]                      | ❌ [manual offloading][acti-db] | ❌ [[↗]][drog-db]                 | ❓                       |
+ | Async ClickHouse                       | ✔️ @ref clickhouse_driver "[↗]"                             | ± third-party driver   | ❌                                         | ± third-party libs             | ❌ [[↗]][drog-db]                 | ❓                       |
+diff --git a/scripts/docs/en/userver/lru_cache.md b/scripts/docs/en/userver/lru_cache.md
+index b4e5e4cd6..65a47009b 100644
+--- a/scripts/docs/en/userver/lru_cache.md
++++ b/scripts/docs/en/userver/lru_cache.md
+@@ -59,5 +59,5 @@ Here's a brief introduction into LRU types:
+ ----------
+ 
+ @htmlonly <div class="bottom-nav"> @endhtmlonly
+-⇦ @ref pg_cache | @ref pg_driver ⇨
++⇦ @ref pg_cache | @ref scripts/docs/en/userver/pg_driver.md ⇨
+ @htmlonly </div> @endhtmlonly
+diff --git a/scripts/docs/en/userver/pg_driver.md b/scripts/docs/en/userver/pg_driver.md
+new file mode 100644
+index 000000000..bf6f2b3e9
+--- /dev/null
++++ b/scripts/docs/en/userver/pg_driver.md
+@@ -0,0 +1,52 @@
++# uPg Driver
++
++**Quality:** @ref QUALITY_TIERS "Platinum Tier".
++
++🐙 **userver** provides access to PostgreSQL database servers via
++components::Postgres. The uPg driver is asynchronous, it suspends
++current coroutine for carrying out network I/O.
++
++## Postgres driver Features
++- PostgreSQL cluster topology discovery;
++- Manual cluster sharding (access to shard clusters by index);
++- Connection pooling;
++- Queries are transparently converted to prepared statements to use less
++  network on next execution, give the database more optimization freedom,
++  avoid the need for parameters escaping as the latter are now send separately from the query;
++- Query construction on the fly via @ref storages::postgres::ParameterStore.
++- Automatic PgaaS topology discovery;
++- Selecting query target (master/slave);
++- Connection failover;
++- Transaction support via @ref storages::postgres::Transaction RAII wrapper;
++- Variadic template query parameter passing;
++- Query result extraction to C++ types;
++- More effective binary protocol usage for communication rather than the libpq's default text protocol;
++- Caching the low-level database (D)escribe responses to save about a half
++  of network bandwidth on select statements that return multiple columns
++  (compared to the libpq implementation);
++- Portals for effective background cache updates;
++- Queries pipelining to execute multiple queries in one network roundtrip
++  (for example `begin + set transaction timeout + insert` result in one roundtrip);
++- Ability to manually control network roundtrips via
++  @ref storages::postgres::QueryQueue to gain maximum efficiency in case of multiple unrelated select statements;
++- Mapping PostgreSQL user types to C++ types;
++- Transaction error injection via pytest_userver.sql.RegisteredTrx;
++- `LISTEN`/`NOTIFY` support via @ref storages::postgres::Cluster::Listen();
++- @ref scripts/docs/en/userver/deadline_propagation.md .
++
++@section toc More information
++- For configuration see components::Postgres
++- For cluster topology see storages::postgres::Cluster
++- @ref pg_transactions
++- @ref pg_run_queries
++- @ref pg_process_results
++- @ref scripts/docs/en/userver/pg_types.md
++- @ref scripts/docs/en/userver/pg_user_types.md
++- @ref pg_errors
++- @ref pg_topology
++
++----------
++
++@htmlonly <div class="bottom-nav"> @endhtmlonly
++⇦ @ref scripts/docs/en/userver/lru_cache.md | @ref pg_transactions ⇨
++@htmlonly </div> @endhtmlonly
+-- 
+2.52.0
+
+
+From 207054567ceb3bd962633bf63699e3f91479d036 Mon Sep 17 00:00:00 2001
+From: antoshkka <antoshkka@userver.tech>
+Date: Wed, 1 Apr 2026 17:25:02 +0300
+Subject: [PATCH 07/12] feat kafka: document task processors and allow their
+ customization
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Tests: протестировано CI
+commit_hash:1363ff2b1222d56624aa9e6f7708859d8b50f480
+---
+ kafka/src/kafka/consumer_component.cpp  | 14 +++++++++++---
+ kafka/src/kafka/consumer_component.yaml | 12 ++++++++++++
+ 2 files changed, 23 insertions(+), 3 deletions(-)
+
+diff --git a/kafka/src/kafka/consumer_component.cpp b/kafka/src/kafka/consumer_component.cpp
+index f7b7a3a00..37050f66e 100644
+--- a/kafka/src/kafka/consumer_component.cpp
++++ b/kafka/src/kafka/consumer_component.cpp
+@@ -18,6 +18,14 @@ USERVER_NAMESPACE_BEGIN
+ 
+ namespace kafka {
+ 
++namespace {
++
++std::string TaskProcessorName(std::string_view name, const components::ComponentConfig& config) {
++    return config[name].As<std::string>(name);
++}
++
++}  // namespace
++
+ ConsumerComponent::ConsumerComponent(
+     const components::ComponentConfig& config,
+     const components::ComponentContext& context
+@@ -26,9 +34,9 @@ ConsumerComponent::ConsumerComponent(
+       consumer_(
+           config.Name(),
+           config["topics"].As<std::vector<std::string>>(),
+-          context.GetTaskProcessor("consumer-task-processor"),
+-          context.GetTaskProcessor("consumer-blocking-task-processor"),
+-          context.GetTaskProcessor("main-task-processor"),
++          context.GetTaskProcessor(TaskProcessorName("consumer-task-processor", config)),
++          context.GetTaskProcessor(TaskProcessorName("consumer-blocking-task-processor", config)),
++          context.GetTaskProcessor(config["task-processor"].As<std::string>("main-task-processor")),
+           config.As<impl::ConsumerConfiguration>(),
+           context.FindComponent<components::Secdist>()
+               .Get()
+diff --git a/kafka/src/kafka/consumer_component.yaml b/kafka/src/kafka/consumer_component.yaml
+index ac0ec0604..c92e27f99 100644
+--- a/kafka/src/kafka/consumer_component.yaml
++++ b/kafka/src/kafka/consumer_component.yaml
+@@ -2,6 +2,18 @@ type: object
+ description: Kafka consumer component
+ additionalProperties: false
+ properties:
++    task-processor:
++        type: string
++        description: the name of the TaskProcessor to invoke callbacks
++        default: main-task-processor
++    consumer-task-processor:
++        type: string
++        description: TaskProcessor for message batches polling. Feel free to use 'main-task-processor'.
++        default: consumer-task-processor
++    consumer-blocking-task-processor:
++        type: string
++        description: TaskProcessor for consumer blocking operations. Feel free to use 'fs-task-processor'.
++        default: consumer-blocking-task-processor
+     group_id:
+         type: string
+         description: |
+-- 
+2.52.0
+
+
+From 81c182bb14a864f953983fb6353d092baade1c82 Mon Sep 17 00:00:00 2001
+From: antoshkka <antoshkka@userver.tech>
+Date: Wed, 1 Apr 2026 18:01:45 +0300
+Subject: [PATCH 08/12] feat ci: disable YDB testing in envs were C++17 was
+ used previously and were YDB fails
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Tests: на прод не влияет
+commit_hash:b64673270df72c1803bcff2e43cc9ad518299e70
+---
+ .github/workflows/alpine.yml    | 1 +
+ .github/workflows/archlinux.yml | 1 +
+ .github/workflows/ci.yml        | 3 +++
+ .github/workflows/debian.yml    | 1 +
+ .github/workflows/fedora.yml    | 1 +
+ .github/workflows/macos.yml     | 1 +
+ 6 files changed, 8 insertions(+)
+
+diff --git a/.github/workflows/alpine.yml b/.github/workflows/alpine.yml
+index 895c262f8..18530f3ce 100644
+--- a/.github/workflows/alpine.yml
++++ b/.github/workflows/alpine.yml
+@@ -40,6 +40,7 @@ jobs:
+                 -DUSERVER_FEATURE_CLICKHOUSE=OFF
+                 -DUSERVER_FEATURE_STACKTRACE=OFF
+                 -DUSERVER_FEATURE_PATCH_LIBPQ=OFF
++                -DUSERVER_FEATURE_YDB=OFF
+                 -DUSERVER_DISABLE_RSEQ_ACCELERATION=YES
+                 -DUSERVER_FORCE_DOWNLOAD_ABSEIL=1
+                 -DUSERVER_FORCE_DOWNLOAD_PROTOBUF=1
+diff --git a/.github/workflows/archlinux.yml b/.github/workflows/archlinux.yml
+index ae167e2dd..b0c4a8c2a 100644
+--- a/.github/workflows/archlinux.yml
++++ b/.github/workflows/archlinux.yml
+@@ -42,6 +42,7 @@ jobs:
+                 -DUSERVER_FEATURE_MONGODB=0
+                 -DUSERVER_FEATURE_OTLP=0
+                 -DUSERVER_FEATURE_ROCKS=0
++                -DUSERVER_FEATURE_YDB=0
+                 -DUSERVER_USE_STATIC_LIBS=0
+                 -DUSERVER_FEATURE_PATCH_LIBPQ=0
+ 
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 442527e6a..4e0838261 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -34,6 +34,7 @@ jobs:
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+                         -DUSERVER_BUILD_SAMPLES=1
+                         -DUSERVER_BUILD_TESTS=1
++                        -DUSERVER_FEATURE_YDB=0
+                         -DUSERVER_NAMESPACE=userver_ns
+                         -DUSERVER_NAMESPACE_BEGIN="namespace userver_ns { inline namespace
+                         v1 {"
+@@ -74,6 +75,7 @@ jobs:
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+                         -DUSERVER_BUILD_SAMPLES=1
+                         -DUSERVER_BUILD_TESTS=1
++                        -DUSERVER_FEATURE_YDB=0
+                         -DUSERVER_NAMESPACE=userver_ns
+                         -DUSERVER_NAMESPACE_BEGIN="namespace userver_ns { inline namespace
+                         v1 {"
+@@ -95,6 +97,7 @@ jobs:
+                         -DUSERVER_BUILD_ALL_COMPONENTS=1
+                         -DUSERVER_BUILD_SAMPLES=1
+                         -DUSERVER_BUILD_TESTS=1
++                        -DUSERVER_FEATURE_YDB=0
+                         -DUSERVER_NO_WERROR=1
+                     os: ubuntu-22.04
+                     info: g++-10 + release
+diff --git a/.github/workflows/debian.yml b/.github/workflows/debian.yml
+index 8332562eb..5d48936ec 100644
+--- a/.github/workflows/debian.yml
++++ b/.github/workflows/debian.yml
+@@ -72,6 +72,7 @@ jobs:
+                 -DUSERVER_FEATURE_CLICKHOUSE=OFF
+                 -DUSERVER_FEATURE_STACKTRACE=OFF
+                 -DUSERVER_FEATURE_PATCH_LIBPQ=OFF
++                -DUSERVER_FEATURE_YDB=OFF
+                 -DUSERVER_DISABLE_RSEQ_ACCELERATION=YES
+                 -DUSERVER_CHAOTIC_FORMAT=OFF
+                 -DUSERVER_CHAOTIC_GOLDEN_TESTS=OFF
+diff --git a/.github/workflows/fedora.yml b/.github/workflows/fedora.yml
+index 2b44ad9a7..48b652832 100644
+--- a/.github/workflows/fedora.yml
++++ b/.github/workflows/fedora.yml
+@@ -49,6 +49,7 @@ jobs:
+                 -DUSERVER_FEATURE_CLICKHOUSE=OFF
+                 -DUSERVER_FEATURE_RABBITMQ=OFF
+                 -DUSERVER_FEATURE_PATCH_LIBPQ=OFF
++                -DUSERVER_FEATURE_YDB=OFF
+                 -DUSERVER_DOWNLOAD_PACKAGES=OFF
+                 -DUSERVER_FEATURE_STACKTRACE=OFF
+ 
+diff --git a/.github/workflows/macos.yml b/.github/workflows/macos.yml
+index 797ee9982..a714b8911 100644
+--- a/.github/workflows/macos.yml
++++ b/.github/workflows/macos.yml
+@@ -31,6 +31,7 @@ jobs:
+                 -DUSERVER_BUILD_SAMPLES=1
+                 -DUSERVER_BUILD_TESTS=1
+                 -DUSERVER_FEATURE_CRYPTOPP_BLAKE2=0
++                -DUSERVER_FEATURE_YDB=0
+                 -DUSERVER_USE_LD=lld
+                 -DUSERVER_FORCE_DOWNLOAD_RE2=1
+                 -DUSERVER_FORCE_DOWNLOAD_ABSEIL=1
+-- 
+2.52.0
+
+
+From 6c1da8ce8c4c7e3c6442e73b72375614dc4ab870 Mon Sep 17 00:00:00 2001
+From: kpavlov00 <kpavlov00@yandex-team.com>
+Date: Wed, 1 Apr 2026 18:29:54 +0300
+Subject: [PATCH 09/12] feat core: add `congestion-control-sensor` testpoints
+ commit_hash:fc35a41d16b98e629ca3a4740eae5c355cd2fde5
+
+---
+ core/src/congestion_control/watchdog.cpp      | 22 +++++-
+ .../basic_chaos/tests-nonchaos/conftest.py    | 28 +++++++
+ .../basic_chaos/tests-nonchaos/test_basic.py  | 73 +++++++++++++++++--
+ 3 files changed, 113 insertions(+), 10 deletions(-)
+
+diff --git a/core/src/congestion_control/watchdog.cpp b/core/src/congestion_control/watchdog.cpp
+index f2c2eeb0d..367e18b4e 100644
+--- a/core/src/congestion_control/watchdog.cpp
++++ b/core/src/congestion_control/watchdog.cpp
+@@ -44,7 +44,22 @@ void Watchdog::Check() {
+     auto cis = cis_.Lock();
+     for (const auto& ci : *cis) {
+         auto data = ci.sensor.FetchCurrent();
++
++        TESTPOINT_CALLBACK_NONCORO(
++            "congestion-control-sensor",
++            formats::json::Value{},
++            tp_,
++            [&data](const formats::json::Value& doc) {
++                data.current_load = doc["current-load"].As<std::uint64_t>(data.current_load);
++                data.overload_events_count = doc["overload-events-count"].As<std::uint64_t>(data.overload_events_count);
++                data.no_overload_events_count =
++                    doc["no-overload-events-count"].As<std::uint64_t>(data.no_overload_events_count);
++                LOG_INFO() << "Forcing CC Sensor data from testpoint: " << doc;
++            }
++        );
++
+         ci.controller.Feed(data);
++
+         auto limit = ci.controller.GetLimit();
+ 
+         TESTPOINT_CALLBACK_NONCORO(
+@@ -52,10 +67,13 @@ void Watchdog::Check() {
+             formats::json::Value{},
+             tp_,
+             [&limit](const formats::json::Value& doc) {
+-                limit.load_limit = doc["force-rps-limit"].As<std::optional<size_t>>();
+-                LOG_ERROR() << "Forcing RPS limit from testpoint: " << limit.load_limit;
++                if (doc.HasMember("force-rps-limit")) {
++                    limit.load_limit = doc["force-rps-limit"].As<std::optional<std::size_t>>();
++                    LOG_ERROR() << "Forcing RPS limit from testpoint: " << limit.load_limit;
++                }
+             }
+         );
++
+         ci.limiter.SetLimit(limit);
+ 
+         TESTPOINT_NONCORO("congestion-control-apply", formats::json::Value{}, tp_);
+diff --git a/grpc/functional_tests/basic_chaos/tests-nonchaos/conftest.py b/grpc/functional_tests/basic_chaos/tests-nonchaos/conftest.py
+index 6cda2e125..280c39b27 100644
+--- a/grpc/functional_tests/basic_chaos/tests-nonchaos/conftest.py
++++ b/grpc/functional_tests/basic_chaos/tests-nonchaos/conftest.py
+@@ -1,3 +1,5 @@
++from typing import Any
++
+ import pytest
+ 
+ import samples.greeter_pb2_grpc as greeter_pb2_grpc
+@@ -5,6 +7,32 @@ import samples.greeter_pb2_grpc as greeter_pb2_grpc
+ pytest_plugins = ['pytest_userver.plugins.grpc']
+ 
+ 
++@pytest.fixture(scope='session')
++def service_env():
++    return {'CPU_LIMIT': '1c'}
++
++
++@pytest.fixture(scope='session')
++def congestion_control_fake_mode() -> bool:
++    return False
++
++
++@pytest.fixture(scope='session')
++def dynamic_config_fallback_patch() -> dict[str, Any]:
++    return {
++        'USERVER_RPS_CCONTROL_ENABLED': True,
++        'USERVER_RPS_CCONTROL': {
++            'min-limit': 1,
++            'up-rate-percent': 100,
++            'down-rate-percent': 100,
++            'overload-on-seconds': 1,
++            'overload-off-seconds': 1,
++            'no-limit-seconds': 1,
++            'start-limit-factor': 0.01,
++        },
++    }
++
++
+ @pytest.fixture
+ def grpc_client(grpc_channel):
+     return greeter_pb2_grpc.GreeterServiceStub(grpc_channel)
+diff --git a/grpc/functional_tests/basic_chaos/tests-nonchaos/test_basic.py b/grpc/functional_tests/basic_chaos/tests-nonchaos/test_basic.py
+index b763a3bbc..46e550562 100644
+--- a/grpc/functional_tests/basic_chaos/tests-nonchaos/test_basic.py
++++ b/grpc/functional_tests/basic_chaos/tests-nonchaos/test_basic.py
+@@ -4,19 +4,22 @@ import pytest
+ import samples.greeter_pb2 as greeter_pb2
+ 
+ 
+-async def test_grpc_cc_enabled(grpc_client, service_client, testpoint):
++async def test_grpc_congestion_control_limit(grpc_client, service_client, testpoint):
++    @testpoint('congestion-control-sensor')
++    def tp_congestion_control_sensor(data):
++        return {}
++
+     @testpoint('congestion-control')
+-    def tp_cc_enable(data):
++    def tp_congestion_control(data):
+         return {'force-rps-limit': 0}
+ 
+     @testpoint('congestion-control-apply')
+-    def tp_cc_apply(data):
++    def tp_congestion_control_apply(data):
+         return {}
+ 
+     # wait until server obtains the new limit, up to 1 second
+     await service_client.enable_testpoints()
+-    await tp_cc_enable.wait_call()
+-    await tp_cc_apply.wait_call()
++    await tp_congestion_control.wait_call()
+ 
+     # Random non-ping handler is throttled
+     with pytest.raises(grpc.RpcError) as error:
+@@ -27,11 +30,65 @@ async def test_grpc_cc_enabled(grpc_client, service_client, testpoint):
+ 
+     # A hack to disable CC for other tests
+     @testpoint('congestion-control')
+-    def tp_cc_disable(data):
++    def tp_congestion_control_disable(data):
++        return {'force-rps-limit': None}
++
++    await tp_congestion_control_disable.wait_call()
++
++
++async def test_grpc_congestion_control_activate(grpc_client, service_client, testpoint):
++    @testpoint('congestion-control-sensor')
++    def tp_congestion_control_sensor(data):
++        return {
++            'current-load': 100,
++            'overload-events-count': 4,
++            'no-overload-events-count': 96,
++        }
++
++    @testpoint('congestion-control')
++    def tp_congestion_control(data):
++        return {}
++
++    @testpoint('congestion-control-apply')
++    def tp_congestion_control_apply(data):
+         return {}
+ 
+-    await tp_cc_disable.wait_call()
+-    await tp_cc_apply.wait_call()
++    # is_overloaded -> true
++    await service_client.enable_testpoints()
++    await tp_congestion_control_sensor.wait_call()
++    await tp_congestion_control.wait_call()
++
++    # current_limit -> 1
++    await tp_congestion_control_sensor.wait_call()
++    await tp_congestion_control.wait_call()
++
++    with pytest.raises(grpc.RpcError) as error:
++        for i in range(0, 2):
++            request = greeter_pb2.GreetingRequest(name=f'Name0{i}/1')
++            await grpc_client.SayHello(request, wait_for_ready=True)
++    assert error.value.details() == 'Congestion control: rate limit exceeded'
++    assert error.value.code() == grpc.StatusCode.RESOURCE_EXHAUSTED
++
++    @testpoint('congestion-control-sensor')
++    def tp_congestion_control_sensor_disable(data):
++        return {
++            'current-load': 100,
++            'overload-events-count': 0,
++            'no-overload-events-count': 100,
++        }
++
++    # current_limit -> 1
++    await tp_congestion_control_sensor_disable.wait_call()
++    await tp_congestion_control.wait_call()
++
++    # current_limit -> null
++    await tp_congestion_control_sensor_disable.wait_call()
++    await tp_congestion_control.wait_call()
++
++    for i in range(1, 10):
++        request = greeter_pb2.GreetingRequest(name=f'Name{i}/2')
++        response = await grpc_client.SayHello(request, wait_for_ready=True)
++        assert response.greeting == f'Hello, Name{i}/2!'
+ 
+ 
+ async def test_grpc_cancellation(grpc_client, service_client, testpoint):
+-- 
+2.52.0
+
+
+From c0a301eccf7faeed2f23cc289e150bbc7d137c0e Mon Sep 17 00:00:00 2001
+From: antonyzhilin <antonyzhilin@userver.tech>
+Date: Wed, 1 Apr 2026 21:44:23 +0300
+Subject: [PATCH 10/12] fix build: mute warning in
+ detached_tasks_sync_block.cpp for clang
+ commit_hash:1f7d21182283e88d01f4a56af248f59c3664de78
+
+---
+ core/src/engine/impl/detached_tasks_sync_block.cpp | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/core/src/engine/impl/detached_tasks_sync_block.cpp b/core/src/engine/impl/detached_tasks_sync_block.cpp
+index 2e1b29846..126eb941c 100644
+--- a/core/src/engine/impl/detached_tasks_sync_block.cpp
++++ b/core/src/engine/impl/detached_tasks_sync_block.cpp
+@@ -48,7 +48,10 @@ struct DetachedTasksSyncBlock::Token final : public PolymorphicAwaiter {
+ // Token is non-standard-layout type, because it is a polymorphic class.
+ // GCC complains that compilers are not required to implement offsetof for such types.
+ // TODO Find some way to work around that, e.g. split Token into multiple types?
+-#if defined(__GNUC__) && !defined(__clang__)
++#if defined(__clang__)
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Winvalid-offsetof"
++#elif defined(__GNUC__)
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Winvalid-offsetof"
+ #endif
+@@ -63,7 +66,9 @@ struct DetachedTasksSyncBlock::Impl final {
+     std::atomic<TaskCancellationReason> cancel_new_tasks{TaskCancellationReason::kNone};
+ };
+ 
+-#if defined(__GNUC__) && !defined(__clang__)
++#if defined(__clang__)
++#pragma clang diagnostic pop
++#elif defined(__GNUC__)
+ #pragma GCC diagnostic pop
+ #endif
+ 
+-- 
+2.52.0
+
+
+From 419345bd1c65a8014034dc78da3db832c5223d17 Mon Sep 17 00:00:00 2001
+From: antoshkka <antoshkka@userver.tech>
+Date: Wed, 1 Apr 2026 22:05:52 +0300
+Subject: [PATCH 11/12] feat chaotic: add TryConvert helper function for enums
+ and use Convert consistently
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Close to the protobuf's `bool Enum_IsValid()` and `bool Enum_Parse()` functions
+
+Right now there is no way to perform enum validity check having string value without throwing an exception.
+
+Tests: протестировано CI
+
+Closes: https://github.com/userver-framework/userver/pull/1157
+commit_hash:95cbf5a663732b08586577a9497c0d34e6f4e395
+---
+ .../chaotic/back/cpp/templates/type.cpp.jinja | 20 +++--
+ .../chaotic/back/cpp/templates/type.hpp.jinja | 12 ++-
+ .../back/cpp/templates/type_parsers.ipp.jinja | 10 +--
+ chaotic/chaotic/back/cpp/types.py             |  2 +-
+ .../golden_tests/output/schemas/enum/enum.cpp | 11 ++-
+ .../golden_tests/output/schemas/enum/enum.hpp |  5 +-
+ .../schemas/production/min_messenger.cpp      | 13 ++-
+ .../schemas/production/min_messenger.hpp      |  7 +-
+ chaotic/include/userver/chaotic/convert.hpp   | 79 +++++++++++++++++--
+ .../include/userver/chaotic/convert/to.hpp    |  5 +-
+ .../include/userver/chaotic/sax_parser.hpp    |  2 +-
+ .../userver/chaotic/sax_parser/enum.hpp       | 10 +--
+ .../userver/chaotic/sax_parser/object.hpp     |  4 +-
+ .../userver/chaotic/type_bundle_cpp.hpp       |  1 +
+ .../userver/chaotic/type_bundle_hpp.hpp       |  3 +
+ chaotic/include/userver/chaotic/with_type.hpp |  6 +-
+ .../tests/lib/sax_parser.cpp                  |  4 +-
+ .../integration_tests/tests/render/simple.cpp | 18 ++++-
+ 18 files changed, 162 insertions(+), 50 deletions(-)
+
+diff --git a/chaotic/chaotic/back/cpp/templates/type.cpp.jinja b/chaotic/chaotic/back/cpp/templates/type.cpp.jinja
+index 908449e36..753fc9a39 100644
+--- a/chaotic/chaotic/back/cpp/templates/type.cpp.jinja
++++ b/chaotic/chaotic/back/cpp/templates/type.cpp.jinja
+@@ -60,16 +60,20 @@
+     {% if type.need_dom_parser() %}
+         {% set local_name = shortest_cpp_name(type) %}
+         {% if type.get_py_type() == 'CppIntEnum' %}
+-            {{ local_name }} FromInt(std::int64_t value, {{ userver }}::formats::parse::To<{{ local_name }}>) {
++            {{ local_name }} Convert(std::int64_t value, {{ userver }}::chaotic::convert::To<{{ local_name }}>) {
+                 const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
+                 if (result.has_value()) {
+                     return *result;
+                 }
+                 throw std::runtime_error(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value));
+             }
++
++            std::optional<{{ local_name }}> TryConvert(std::int64_t value, {{ userver }}::chaotic::convert::To<{{ local_name }}>) noexcept {
++                return k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
++            }
+         {% elif type.get_py_type() == 'CppStringEnum' %}
+-            {{ local_name }} FromString(std::string_view value,
+-                            {{userver}}::formats::parse::To<{{ local_name }}>)
++            {{ local_name }} Convert(std::string_view value,
++                            {{userver}}::chaotic::convert::To<{{ local_name }}>)
+             {
+                 const auto result = k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
+                 if (result.has_value()) {
+@@ -78,10 +82,14 @@
+                 throw std::runtime_error(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value));
+             }
+ 
+-            {{ local_name }} Parse(std::string_view value,
+-                            {{userver}}::formats::parse::To<{{ local_name }}> to)
++            std::optional<{{ local_name }}> TryConvert(std::string_view value, {{userver}}::chaotic::convert::To<{{ local_name }}>) noexcept
++            {
++                return k{{ type.cpp_global_struct_field_name() }}_Mapping.TryFindBySecond(value);
++            }
++
++            {{ local_name }} Parse(std::string_view value, {{userver}}::formats::parse::To<{{ local_name }}>)
+             {
+-                return FromString(value, to);
++                return Convert(value, {{userver}}::chaotic::convert::To<{{ local_name }}>{});
+             }
+         {% endif %}
+     {% endif %}
+diff --git a/chaotic/chaotic/back/cpp/templates/type.hpp.jinja b/chaotic/chaotic/back/cpp/templates/type.hpp.jinja
+index d419794cb..254ce5403 100644
+--- a/chaotic/chaotic/back/cpp/templates/type.hpp.jinja
++++ b/chaotic/chaotic/back/cpp/templates/type.hpp.jinja
+@@ -242,10 +242,16 @@
+ 
+     {% if type.need_dom_parser() %}
+         {% if type.get_py_type() == 'CppIntEnum' %}
+-            {{ shortest_cpp_name(type) }} FromInt(std::int64_t value, {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
++            {{ shortest_cpp_name(type) }} Convert(std::int64_t value, {{ userver }}::chaotic::convert::To<{{ shortest_cpp_name(type) }}>);
++
++            std::optional<{{ shortest_cpp_name(type) }}> TryConvert(std::int64_t value,
++                                                         {{ userver }}::chaotic::convert::To<{{ shortest_cpp_name(type) }}>) noexcept;
+         {% elif type.get_py_type() == 'CppStringEnum' %}
+-            {{ type.raw_cpp_type.in_scope(get_current_namespace()) }} FromString(std::string_view value,
+-                            {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type) }}>);
++            {{ type.raw_cpp_type.in_scope(get_current_namespace()) }} Convert(std::string_view value,
++                            {{ userver }}::chaotic::convert::To<{{ shortest_cpp_name(type) }}>);
++
++            std::optional<{{ shortest_cpp_name(type) }}> TryConvert(std::string_view value,
++                            {{ userver }}::chaotic::convert::To<{{ shortest_cpp_name(type) }}>) noexcept;
+ 
+             {# backward compatibility #}
+             {{shortest_cpp_name(type)}} Parse(std::string_view value,
+diff --git a/chaotic/chaotic/back/cpp/templates/type_parsers.ipp.jinja b/chaotic/chaotic/back/cpp/templates/type_parsers.ipp.jinja
+index db6487ded..d6e1efb22 100644
+--- a/chaotic/chaotic/back/cpp/templates/type_parsers.ipp.jinja
++++ b/chaotic/chaotic/back/cpp/templates/type_parsers.ipp.jinja
+@@ -104,14 +104,14 @@
+     {% elif type.get_py_type() == 'CppIntEnum' %}
+         template<typename Value, typename = std::enable_if_t<{{ userver }}::formats::common::kIsFormatValue<Value>>>
+         {{ shortest_cpp_name(type, blacklist=['Value']) }} Parse(Value val,
+-                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}> to)
++                         {{ userver }}::formats::parse::To<{{ shortest_cpp_name(type, blacklist=['Value']) }}>)
+         {
+-            const auto value = val.template As<std::int32_t>();
+-            try {
+-              return FromInt(value, to);
+-            } catch (const std::exception&) {
++            const auto value = val.template As<std::int64_t>();
++            const auto converted_opt = TryConvert(value, {{ userver }}::chaotic::convert::To<{{ shortest_cpp_name(type) }}>{});
++            if (!converted_opt) {
+               {{ userver }}::chaotic::ThrowForValue(fmt::format("Invalid enum value ({}) for type {{ type.cpp_global_name() }}", value), val);
+             }
++            return *converted_opt;
+         }
+     {% elif type.get_py_type() == 'CppStringEnum' %}
+         template<typename Value, typename = std::enable_if_t<{{ userver }}::formats::common::kIsFormatValue<Value>>>
+diff --git a/chaotic/chaotic/back/cpp/types.py b/chaotic/chaotic/back/cpp/types.py
+index 2e8b2f2f6..747510a4f 100644
+--- a/chaotic/chaotic/back/cpp/types.py
++++ b/chaotic/chaotic/back/cpp/types.py
+@@ -630,7 +630,7 @@ class CppStructField:
+             elif isinstance(default, int):
+                 default = f'{default}LL'
+             type_ = self.schema.user_cpp_type
+-            return f'Convert({default}, USERVER_NAMESPACE::chaotic::convert::To<{type_}>{{}})'
++            return f'USERVER_NAMESPACE::chaotic::ConvertTo<{type_}>({default})'
+ 
+         return f'{default}'
+ 
+diff --git a/chaotic/golden_tests/output/schemas/enum/enum.cpp b/chaotic/golden_tests/output/schemas/enum/enum.cpp
+index 05844d4c2..31a3320f8 100644
+--- a/chaotic/golden_tests/output/schemas/enum/enum.cpp
++++ b/chaotic/golden_tests/output/schemas/enum/enum.cpp
+@@ -45,7 +45,7 @@ Enum Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::format
+   return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+ }
+ 
+-Enum::Foo FromString(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo>) {
++Enum::Foo Convert(std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>) {
+   const auto result = k__ns__Enum__Foo_Mapping.TryFindBySecond(value);
+   if (result.has_value()) {
+     return *result;
+@@ -53,8 +53,13 @@ Enum::Foo FromString(std::string_view value, USERVER_NAMESPACE::formats::parse::
+   throw std::runtime_error(fmt::format("Invalid enum value ({}) for type ::ns::Enum::Foo", value));
+ }
+ 
+-Enum::Foo Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo> to) {
+-  return FromString(value, to);
++std::optional<Enum::Foo> TryConvert(std::string_view value,
++                                    USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>) noexcept {
++  return k__ns__Enum__Foo_Mapping.TryFindBySecond(value);
++}
++
++Enum::Foo Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo>) {
++  return Convert(value, USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>{});
+ }
+ 
+ USERVER_NAMESPACE::formats::json::Value Serialize(
+diff --git a/chaotic/golden_tests/output/schemas/enum/enum.hpp b/chaotic/golden_tests/output/schemas/enum/enum.hpp
+index d3a755680..6dcceabb1 100644
+--- a/chaotic/golden_tests/output/schemas/enum/enum.hpp
++++ b/chaotic/golden_tests/output/schemas/enum/enum.hpp
+@@ -48,7 +48,10 @@ Enum Parse(USERVER_NAMESPACE::yaml_config::Value json, USERVER_NAMESPACE::format
+ 
+ Enum FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<Enum>);
+ 
+-Enum::Foo FromString(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo>);
++Enum::Foo Convert(std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>);
++
++std::optional<Enum::Foo> TryConvert(std::string_view value,
++                                    USERVER_NAMESPACE::chaotic::convert::To<Enum::Foo>) noexcept;
+ 
+ Enum::Foo Parse(std::string_view value, USERVER_NAMESPACE::formats::parse::To<Enum::Foo>);
+ 
+diff --git a/chaotic/golden_tests/output/schemas/production/min_messenger.cpp b/chaotic/golden_tests/output/schemas/production/min_messenger.cpp
+index 06a9cd8bd..1387016ad 100644
+--- a/chaotic/golden_tests/output/schemas/production/min_messenger.cpp
++++ b/chaotic/golden_tests/output/schemas/production/min_messenger.cpp
+@@ -713,8 +713,8 @@ V1LikeTriggerRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
+   return Parse<USERVER_NAMESPACE::yaml_config::Value>(json, to);
+ }
+ 
+-V1LikeTriggerRequest::Animation FromString(std::string_view value,
+-                                           USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>) {
++V1LikeTriggerRequest::Animation Convert(std::string_view value,
++                                        USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>) {
+   const auto result = k__ns__V1LikeTriggerRequest__Animation_Mapping.TryFindBySecond(value);
+   if (result.has_value()) {
+     return *result;
+@@ -723,9 +723,14 @@ V1LikeTriggerRequest::Animation FromString(std::string_view value,
+       fmt::format("Invalid enum value ({}) for type ::ns::V1LikeTriggerRequest::Animation", value));
+ }
+ 
++std::optional<V1LikeTriggerRequest::Animation> TryConvert(
++    std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>) noexcept {
++  return k__ns__V1LikeTriggerRequest__Animation_Mapping.TryFindBySecond(value);
++}
++
+ V1LikeTriggerRequest::Animation Parse(std::string_view value,
+-                                      USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation> to) {
+-  return FromString(value, to);
++                                      USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>) {
++  return Convert(value, USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>{});
+ }
+ 
+ USERVER_NAMESPACE::formats::json::Value Serialize(
+diff --git a/chaotic/golden_tests/output/schemas/production/min_messenger.hpp b/chaotic/golden_tests/output/schemas/production/min_messenger.hpp
+index de8be126b..7d8750a96 100644
+--- a/chaotic/golden_tests/output/schemas/production/min_messenger.hpp
++++ b/chaotic/golden_tests/output/schemas/production/min_messenger.hpp
+@@ -491,8 +491,11 @@ V1LikeTriggerRequest Parse(USERVER_NAMESPACE::yaml_config::Value json,
+ 
+ V1LikeTriggerRequest FromJsonString(std::string_view json, USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest>);
+ 
+-V1LikeTriggerRequest::Animation FromString(std::string_view value,
+-                                           USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>);
++V1LikeTriggerRequest::Animation Convert(std::string_view value,
++                                        USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>);
++
++std::optional<V1LikeTriggerRequest::Animation> TryConvert(
++    std::string_view value, USERVER_NAMESPACE::chaotic::convert::To<V1LikeTriggerRequest::Animation>) noexcept;
+ 
+ V1LikeTriggerRequest::Animation Parse(std::string_view value,
+                                       USERVER_NAMESPACE::formats::parse::To<V1LikeTriggerRequest::Animation>);
+diff --git a/chaotic/include/userver/chaotic/convert.hpp b/chaotic/include/userver/chaotic/convert.hpp
+index 5de022b3c..066515f81 100644
+--- a/chaotic/include/userver/chaotic/convert.hpp
++++ b/chaotic/include/userver/chaotic/convert.hpp
+@@ -1,25 +1,88 @@
+ #pragma once
+ 
++/// @file userver/chaotic/convert.hpp
++/// @brief @copybrief chaotic::ConvertTo
++
++#include <cstdint>
++#include <string_view>
+ #include <type_traits>
+ 
+ #include <userver/chaotic/convert/to.hpp>
+ 
+ USERVER_NAMESPACE_BEGIN
+ 
+-namespace chaotic::convert {
++namespace chaotic {
++namespace convert {
+ 
+-template <typename T, typename U>
+-constexpr U Convert(const T& value, To<U>) {
++namespace impl {
++
++template <typename YourType>
++constexpr void ReportMissingConvert(std::string_view, chaotic::convert::To<YourType>) {
++    static_assert(
++        sizeof(YourType) && false,
++        "There is no `YourType Convert(std::string_view, chaotic::convert::To<YourType>)` in namespace of `YourType` "
++        "or `chaotic::convert`. Probably you have not provided a `Convert` function overload."
++    );
++}
++
++template <typename YourType>
++constexpr void ReportMissingConvert(std::int64_t, chaotic::convert::To<YourType>) {
++    static_assert(
++        sizeof(YourType) && false,
++        "There is no `YourType Convert(std::int64_t, chaotic::convert::To<YourType>)` in namespace of `YourType` or "
++        "`chaotic::convert`. Probably you have not provided a `Convert` function overload."
++    );
++}
++
++template <class T, class YourType>
++constexpr void ReportMissingConvert(T&&, chaotic::convert::To<YourType>) {
+     static_assert(
+-        std::is_constructible_v<U, const T&>,
+-        "There is no `Convert(const Value&, chaotic::convert::To<T>)` in "
+-        "namespace of `T` or `chaotic::convert`. Probably you have not provided "
+-        "a `Convert` function overload."
++        sizeof(YourType) && false,
++        "There is no `YourType Convert(T&&, chaotic::convert::To<YourType>)` in namespace of `T`, `YourType` or "
++        "`chaotic::convert`. Probably you have not provided a `Convert` function overload."
+     );
++}
++
++template <typename YourType, typename T>
++constexpr void ReportMissingConvert(const YourType&, chaotic::convert::To<T>) {
++    static_assert(
++        sizeof(YourType) && false,
++        "There is no `T Convert(const YourType&, chaotic::convert::To<T>)` in namespace of `T`, `YourType` or "
++        "`chaotic::convert`. Probably you have not provided a `Convert` function overload."
++    );
++}
++
++template <typename TargetType>
++class ConvertCPO {
++public:
++    template <typename... Args>
++    constexpr void operator()(Args&&... args) const noexcept {
++        static_assert(sizeof...(Args) == 1, "Should be used with a single argument only");
++        impl::ReportMissingConvert(std::forward<Args>(args)..., chaotic::convert::To<TargetType>{});
++    }
+ 
++    template <typename T>
++    constexpr auto operator()(T&& value
++    ) const -> decltype(Convert(std::forward<T>(value), chaotic::convert::To<TargetType>{}))
++    {
++        return Convert(std::forward<T>(value), chaotic::convert::To<TargetType>{});
++    }
++};
++
++}  // namespace impl
++
++template <typename T, typename U>
++constexpr std::enable_if_t<std::is_constructible_v<U, const T&>, U> Convert(const T& value, To<U>) {
+     return U{value};
+ }
+ 
+-}  // namespace chaotic::convert
++}  // namespace convert
++
++/// @brief Helper function to dispatch to user defined `Convert(X, To<Y>)` functions.
++/// Use like `chaotic::ConvertTo<TargetType>(value_from)`.
++template <typename To>
++constexpr inline convert::impl::ConvertCPO<To> ConvertTo{};
++
++}  // namespace chaotic
+ 
+ USERVER_NAMESPACE_END
+diff --git a/chaotic/include/userver/chaotic/convert/to.hpp b/chaotic/include/userver/chaotic/convert/to.hpp
+index d2a51d92f..09fd1f0b8 100644
+--- a/chaotic/include/userver/chaotic/convert/to.hpp
++++ b/chaotic/include/userver/chaotic/convert/to.hpp
+@@ -1,11 +1,14 @@
+ #pragma once
+ 
+-#include <string>
++/// @file userver/chaotic/convert/to.hpp
++/// @brief @copybrief chaotic::convert::to
+ 
+ USERVER_NAMESPACE_BEGIN
+ 
+ namespace chaotic::convert {
+ 
++/// @brief Helper type for defining `Convert` functions for chaotic.
++/// @see @ref convert::ConvertTo
+ template <typename T>
+ struct To {};
+ 
+diff --git a/chaotic/include/userver/chaotic/sax_parser.hpp b/chaotic/include/userver/chaotic/sax_parser.hpp
+index 9c4de7063..f0c4758a6 100644
+--- a/chaotic/include/userver/chaotic/sax_parser.hpp
++++ b/chaotic/include/userver/chaotic/sax_parser.hpp
+@@ -41,7 +41,7 @@ private:
+         } else {
+             auto user_value = [this, &value] {
+                 try {
+-                    return Convert(std::move(value), convert::To<UserType>{});
++                    return chaotic::ConvertTo<UserType>(std::move(value));
+                 } catch (const std::exception& e) {
+                     formats::json::parser::BaseParser& base = parser_.GetParser();
+                     chaotic::ThrowForPath<formats::json::Value>(e.what(), base.GetCurrentPath());
+diff --git a/chaotic/include/userver/chaotic/sax_parser/enum.hpp b/chaotic/include/userver/chaotic/sax_parser/enum.hpp
+index d0158f189..adb31afff 100644
+--- a/chaotic/include/userver/chaotic/sax_parser/enum.hpp
++++ b/chaotic/include/userver/chaotic/sax_parser/enum.hpp
+@@ -1,9 +1,9 @@
+ #pragma once
+ 
++#include <userver/chaotic/convert.hpp>
+ #include <userver/chaotic/sax_parser/primitive.hpp>
+ #include <userver/formats/json/parser/int_parser.hpp>
+ #include <userver/formats/json/parser/string_parser.hpp>
+-#include <userver/formats/parse/to.hpp>
+ #include <userver/utils/void_t.hpp>
+ 
+ USERVER_NAMESPACE_BEGIN
+@@ -28,9 +28,7 @@ public:
+     formats::json::parser::BaseParser& GetParser() { return parser_; }
+ 
+ private:
+-    void OnSend(std::string&& value) override {
+-        subscriber_->OnSend(FromString(value, formats::parse::To<StringEnum>()));
+-    }
++    void OnSend(std::string&& value) override { subscriber_->OnSend(chaotic::ConvertTo<StringEnum>(value)); }
+ 
+     formats::json::parser::StringParser parser_;
+     formats::json::parser::Subscriber<StringEnum>* subscriber_{nullptr};
+@@ -53,7 +51,7 @@ public:
+     formats::json::parser::BaseParser& GetParser() { return parser_; }
+ 
+ private:
+-    void OnSend(std::int64_t&& value) override { subscriber_->OnSend(FromInt(value, formats::parse::To<IntEnum>())); }
++    void OnSend(std::int64_t&& value) override { subscriber_->OnSend(chaotic::ConvertTo<IntEnum>(value)); }
+ 
+     formats::json::parser::Int64Parser parser_;
+     formats::json::parser::Subscriber<IntEnum>* subscriber_{nullptr};
+@@ -63,7 +61,7 @@ template <typename Enum, typename = void>
+ struct IsStringEnum : std::false_type {};
+ 
+ template <typename Enum>
+-struct IsStringEnum<Enum, utils::void_t<decltype(FromString(std::string_view{}, formats::parse::To<Enum>{}))>>
++struct IsStringEnum<Enum, utils::void_t<decltype(Convert(std::string_view{}, chaotic::convert::To<Enum>{}))>>
+     : std::true_type {};
+ 
+ }  // namespace impl
+diff --git a/chaotic/include/userver/chaotic/sax_parser/object.hpp b/chaotic/include/userver/chaotic/sax_parser/object.hpp
+index d0c295ea5..981f184e8 100644
+--- a/chaotic/include/userver/chaotic/sax_parser/object.hpp
++++ b/chaotic/include/userver/chaotic/sax_parser/object.hpp
+@@ -149,7 +149,7 @@ public:
+             s.extra.clear();
+             s.extra.insert(std::move_iterator(map_.begin()), std::move_iterator(map_.end()));
+         } else {
+-            s.extra = Convert(std::move(map_), convert::To<TargetType>{});
++            s.extra = chaotic::ConvertTo<TargetType>(std::move(map_));
+         }
+     }
+ 
+@@ -227,7 +227,7 @@ public:
+             } else if constexpr (std::is_arithmetic_v<TargetType> && std::is_arithmetic_v<DefaultType>) {
+                 object_.*FieldType::kField = TargetType{ModeDescriptorType::DefaultValue};
+             } else {
+-                object_.*FieldType::kField = Convert(ModeDescriptorType::DefaultValue, convert::To<TargetType>{});
++                object_.*FieldType::kField = chaotic::ConvertTo<TargetType>(ModeDescriptorType::DefaultValue);
+             }
+         }
+     }
+diff --git a/chaotic/include/userver/chaotic/type_bundle_cpp.hpp b/chaotic/include/userver/chaotic/type_bundle_cpp.hpp
+index bd9739841..d2cbb373b 100644
+--- a/chaotic/include/userver/chaotic/type_bundle_cpp.hpp
++++ b/chaotic/include/userver/chaotic/type_bundle_cpp.hpp
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <userver/chaotic/convert.hpp>
+ #include <userver/formats/json/parser/typed_parser.hpp>  // formats::json::parser::ParseToType for T::FromJsonString
+ #include <userver/formats/json/serialize.hpp>            // formats::json::FromString for T::FromJsonString
+ #include <userver/formats/json/value.hpp>
+diff --git a/chaotic/include/userver/chaotic/type_bundle_hpp.hpp b/chaotic/include/userver/chaotic/type_bundle_hpp.hpp
+index f9d95af08..284426880 100644
+--- a/chaotic/include/userver/chaotic/type_bundle_hpp.hpp
++++ b/chaotic/include/userver/chaotic/type_bundle_hpp.hpp
+@@ -1,5 +1,8 @@
+ #pragma once
+ 
++#include <optional>
++
++#include <userver/chaotic/convert.hpp>
+ #include <userver/formats/json_fwd.hpp>
+ #include <userver/formats/parse/to.hpp>
+ #include <userver/formats/yaml_fwd.hpp>
+diff --git a/chaotic/include/userver/chaotic/with_type.hpp b/chaotic/include/userver/chaotic/with_type.hpp
+index 47cb3db28..ef085ae6a 100644
+--- a/chaotic/include/userver/chaotic/with_type.hpp
++++ b/chaotic/include/userver/chaotic/with_type.hpp
+@@ -19,7 +19,7 @@ template <typename Value, typename RawType, typename UserType>
+ UserType Parse(const Value& value, formats::parse::To<WithType<RawType, UserType>>) {
+     auto result = value.template As<RawType>();
+     try {
+-        return Convert(std::move(result), convert::To<UserType>{});
++        return chaotic::ConvertTo<UserType>(std::move(result));
+     } catch (const std::exception& e) {
+         chaotic::ThrowForValue(e.what(), value);
+     }
+@@ -27,8 +27,8 @@ UserType Parse(const Value& value, formats::parse::To<WithType<RawType, UserType
+ 
+ template <typename Value, typename RawType, typename UserType>
+ Value Serialize(const WithType<RawType, UserType>& ps, formats::serialize::To<Value>) {
+-    return typename Value::Builder{RawType{Convert(ps.value, convert::To<std::decay_t<decltype(RawType::value)>>())}
+-    }.ExtractValue();
++    using RawTypeDecayed = std::decay_t<decltype(RawType::value)>;
++    return typename Value::Builder{RawType{chaotic::ConvertTo<RawTypeDecayed>(ps.value)}}.ExtractValue();
+ }
+ 
+ }  // namespace chaotic
+diff --git a/chaotic/integration_tests/tests/lib/sax_parser.cpp b/chaotic/integration_tests/tests/lib/sax_parser.cpp
+index 62fe6b6b4..06d2d1322 100644
+--- a/chaotic/integration_tests/tests/lib/sax_parser.cpp
++++ b/chaotic/integration_tests/tests/lib/sax_parser.cpp
+@@ -89,7 +89,7 @@ enum class EnumInt {
+     kTwo,
+ };
+ 
+-EnumInt FromInt(int i, formats::parse::To<EnumInt>) {
++EnumInt Convert(std::int64_t i, chaotic::convert::To<EnumInt>) {
+     switch (i) {
+         case 1:
+             return EnumInt::kOne;
+@@ -114,7 +114,7 @@ enum class EnumString {
+     kTwo,
+ };
+ 
+-EnumString FromString(std::string_view str, formats::parse::To<EnumString>) {
++EnumString Convert(std::string_view str, chaotic::convert::To<EnumString>) {
+     if (str == "one") {
+         return EnumString::kOne;
+     } else if (str == "two") {
+diff --git a/chaotic/integration_tests/tests/render/simple.cpp b/chaotic/integration_tests/tests/render/simple.cpp
+index 091440e25..d678a3a78 100644
+--- a/chaotic/integration_tests/tests/render/simple.cpp
++++ b/chaotic/integration_tests/tests/render/simple.cpp
+@@ -258,6 +258,11 @@ TEST(Simple, IntegerEnum) {
+     std::size_t index = 0;
+     for (const auto& value : ns::kIntegerEnumValues) {
+         EXPECT_EQ(value, values[index]);
++        EXPECT_EQ(chaotic::ConvertTo<ns::IntegerEnum>(value), value);
++        EXPECT_EQ(chaotic::ConvertTo<ns::IntegerEnum>(static_cast<std::int64_t>(value)), value);
++        EXPECT_EQ(Convert(static_cast<std::int64_t>(value), chaotic::convert::To<ns::IntegerEnum>{}), value);
++        EXPECT_EQ(TryConvert(static_cast<std::int64_t>(value), chaotic::convert::To<ns::IntegerEnum>{}), value);
++
+         ++index;
+     }
+ }
+@@ -296,9 +301,18 @@ TEST(Simple, StringEnum) {
+     EXPECT_EQ("bar", ToString(ns::StringEnum::kBar));
+     EXPECT_EQ("some!thing", ToString(ns::StringEnum::kSomeThing));
+ 
+-    EXPECT_EQ(FromString("foo", formats::parse::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
++    EXPECT_EQ(TryConvert("foo", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
++    EXPECT_EQ(TryConvert("bar", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kBar);
++    EXPECT_EQ(TryConvert("some!thing", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kSomeThing);
++    EXPECT_FALSE(TryConvert("invalid", chaotic::convert::To<ns::StringEnum>{}));
++
++    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("foo"), ns::StringEnum::kFoo);
++    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("bar"), ns::StringEnum::kBar);
++    EXPECT_EQ(chaotic::ConvertTo<ns::StringEnum>("some!thing"), ns::StringEnum::kSomeThing);
++
++    EXPECT_EQ(Convert("foo", chaotic::convert::To<ns::StringEnum>{}), ns::StringEnum::kFoo);
+     UEXPECT_THROW_MSG(
+-        FromString("zoo", formats::parse::To<ns::StringEnum>{}),
++        Convert("zoo", chaotic::convert::To<ns::StringEnum>{}),
+         std::runtime_error,
+         "Invalid enum value (zoo) for type ::ns::StringEnum"
+     );
+-- 
+2.52.0
+
+
+From 2aba43344a1a939837689c9286ae31e9a8554bda Mon Sep 17 00:00:00 2001
+From: antonyzhilin <antonyzhilin@userver.tech>
+Date: Wed, 1 Apr 2026 23:51:39 +0300
+Subject: [PATCH 12/12] fix build: fix MonotonicConcurrentSet kNullTable being
+ non-constexpr-able commit_hash:2858f97bbcd9b497a6e6544557c760589325be72
+
+---
+ universal/include/userver/utils/span.hpp | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/universal/include/userver/utils/span.hpp b/universal/include/userver/utils/span.hpp
+index e4808d3c1..7eddb73b0 100644
+--- a/universal/include/userver/utils/span.hpp
++++ b/universal/include/userver/utils/span.hpp
+@@ -35,11 +35,16 @@ public:
+     constexpr span() noexcept : span(nullptr, nullptr) {}
+ 
+     constexpr span(T* begin, T* end) noexcept : begin_(begin), end_(end) {
+-        UASSERT((begin != nullptr && end != nullptr && begin <= end) || (begin == nullptr && end == nullptr));
++        // GCC 11.4.0 has issues with comparing pointers at compile time.
++        UASSERT(
++            std::is_constant_evaluated() || (begin != nullptr && end != nullptr && begin <= end) ||
++            (begin == nullptr && end == nullptr)
++        );
+     }
+ 
+     constexpr span(T* begin, std::size_t size) noexcept : begin_(begin), end_(begin + size) {
+-        UASSERT(begin != nullptr || size == 0);
++        // GCC 11.4.0 has issues with comparing pointers at compile time.
++        UASSERT(std::is_constant_evaluated() || begin != nullptr || size == 0);
+     }
+ 
+ #if defined(__GNUC__) && !defined(__clang__)
+-- 
+2.52.0
+

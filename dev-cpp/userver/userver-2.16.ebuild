@@ -9,15 +9,15 @@ HOMEPAGE="https://github.com/userver-framework/userver"
 
 inherit pypi
 
-MAIN_SRC="v2.15.tar.gz"
+MAIN_SRC="v2.16.tar.gz"
 
 PYTHON_LIBS=(
   "wheel 0.46.3"
   "typing-extensions 4.15.0"
   "sqlparse 0.5.5"
-  "redis 7.1.0"
+  "redis 7.4.0"
   "PyMySQL 1.1.2"
-  "pygments 2.19.2"
+  "pygments 2.20.0"
   "propcache 0.4.1"
   "pluggy 1.6.0"
   "packaging 26.0"
@@ -28,21 +28,20 @@ PYTHON_LIBS=(
   "dnspython 2.8.0"
   "crc 7.1.0"
   "cached-property 2.0.1"
-  "attrs 25.4.0"
+  "attrs 26.1.0"
   "async-timeout 5.0.1"
   "aiohappyeyeballs 2.6.1"
-  "yarl 1.22.0"
+  "yarl 1.23.0"
   "pytest 9.0.2"
   "aiosignal 1.4.0"
-# "aiokafka 0.13.0" (pypi mistake)
   "pytest-asyncio 1.3.0"
-  "aiormq 6.9.2"
+  "aiormq 6.9.4"
   "pytest-aiohttp 1.1.0"
-  "aio-pika 9.5.8"
-  "yandex-taxi-testsuite 0.4.2.5"
+  "aio-pika 9.6.2"
+  "yandex-taxi-testsuite 0.4.5"
   "Jinja2 3.1.6"
   "pydantic 2.12.5"
-  "setuptools 80.10.2"
+  "setuptools 82.0.1"
   "annotated-types 0.7.0"
   "typing-inspection 0.4.2"
   "Cython 3.2.4"
@@ -51,14 +50,15 @@ PYTHON_LIBS=(
 PY2PY3_LIBS=(
   "six 1.17.0"
   "py 1.11.0"
-  "pamqp 3.3.0"
   "python-dateutil 2.9.0.post0"
+  "pamqp 3.3.0"
+#  "transliterate 1.10.2" (pypi bug; download url: https://files.pythonhosted.org/packages/a1/6e/9a9d597dbdd6d0172427c8cc07c35736471e631060df9e59eeb87687f817/transliterate-1.10.2-py2.py3-none-any.whl )
 )
 
 MANYLINUX_PYTHON_LIBS=(
   "pymongo 4.16.0"
   "pyyaml 6.0.3"
-  "aiohttp 3.13.3"
+  "aiohttp 3.13.5"
 # "pydantic_core 2.41.5" (pypi bug; download url: https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl )
   "MarkupSafe 3.0.3"
 )
@@ -70,7 +70,7 @@ PYTHON_SDIST_LIBS=(
   "yandex-pgmigrate 1.0.12"
 )
 
-SRC_URI="https://github.com/userver-framework/userver/archive/refs/tags/${MAIN_SRC} -> userver-framework-${MAIN_SRC} https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+SRC_URI="https://github.com/userver-framework/userver/archive/refs/tags/${MAIN_SRC} -> userver-framework-${MAIN_SRC} https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl https://files.pythonhosted.org/packages/a1/6e/9a9d597dbdd6d0172427c8cc07c35736471e631060df9e59eeb87687f817/transliterate-1.10.2-py2.py3-none-any.whl"
 
 for dep in "${PYTHON_LIBS[@]}"; do
 	set -- ${dep}
@@ -123,7 +123,7 @@ IUSE="postgres redis mongodb mysql rabbitmq kafka utest testsuite easy odbc +ubo
 
 #RDEPEND="!dev-cpp/userver-meta dev-util/ruff dev-libs/re2[icu] dev-cpp/cctz dev-libs/cyrus-sasl[static-libs] dev-libs/protobuf app-crypt/mit-krb5 dev-libs/boost dev-cpp/yaml-cpp dev-debug/gdb dev-lang/python[ssl] dev-libs/crypto++[static-libs] dev-libs/jemalloc dev-libs/libbson[static-libs] dev-libs/libev[static-libs] dev-libs/libfmt dev-libs/openssl[static-libs] dev-libs/pugixml dev-libs/re2 dev-python/pip dev-python/voluptuous dev-util/ccache dev-build/cmake dev-build/ninja dev-vcs/git llvm-core/clang net-dns/c-ares[static-libs] net-libs/nghttp2 net-misc/curl[static-libs] net-nds/openldap[static-libs] sys-libs/zlib[static-libs] grpc? ( net-libs/grpc ) postgres? ( dev-db/postgresql[static-libs] ) redis? ( dev-db/redis dev-libs/hiredis[static-libs] ) mongodb? ( dev-db/mongodb dev-libs/mongo-c-driver[static-libs] ) mysql? ( dev-db/mariadb ) rabbitmq? ( dev-cpp/amqp-cpp ) kafka? ( dev-libs/librdkafka ) rocksdb? ( dev-libs/rocksdb[static-libs] ) sqlite? ( dev-db/sqlite ) utest? ( dev-cpp/gtest dev-cpp/benchmark ) ( dev-db/unixODBC[static-libs] ) sqlite? ( dev-db/sqlite )"
 
-RDEPEND="!dev-cpp/userver-meta dev-util/ruff dev-libs/re2[icu] dev-cpp/cctz dev-libs/cyrus-sasl[static-libs] dev-libs/protobuf app-crypt/mit-krb5 >=dev-libs/boost-1.89.0 dev-cpp/yaml-cpp dev-debug/gdb dev-lang/python[ssl] dev-libs/crypto++[static-libs] dev-libs/jemalloc dev-libs/libbson[static-libs] dev-libs/libev[static-libs] <=dev-libs/libfmt-11.1.4 dev-libs/openssl[static-libs] dev-libs/pugixml dev-libs/re2 dev-python/pip dev-python/voluptuous dev-util/ccache dev-build/cmake dev-build/ninja dev-vcs/git llvm-core/clang net-dns/c-ares[static-libs] net-libs/nghttp2 net-misc/curl[static-libs] net-nds/openldap[static-libs] sys-libs/zlib[static-libs] postgres? ( dev-db/postgresql[static-libs] ) redis? ( dev-db/redis dev-libs/hiredis[static-libs] ) mongodb? ( >=dev-db/mongodb-8.0.12 dev-libs/mongo-c-driver[static-libs] ) mysql? ( dev-db/mariadb ) rabbitmq? ( dev-cpp/amqp-cpp ) kafka? ( dev-libs/librdkafka ) sqlite? ( dev-db/sqlite ) utest? ( dev-cpp/gtest dev-cpp/benchmark ) odbc? ( dev-db/unixODBC[static-libs] ) sqlite? ( dev-db/sqlite )"
+RDEPEND="!dev-cpp/userver-meta dev-util/ruff dev-libs/re2[icu] dev-cpp/cctz dev-libs/cyrus-sasl[static-libs] dev-libs/protobuf app-crypt/mit-krb5 >=dev-libs/boost-1.89.0 dev-cpp/yaml-cpp dev-debug/gdb dev-lang/python[ssl] dev-libs/crypto++[static-libs] dev-libs/jemalloc dev-libs/libbson[static-libs] dev-libs/libev[static-libs] dev-libs/libfmt dev-libs/openssl[static-libs] dev-libs/pugixml dev-libs/re2 dev-python/pip dev-python/voluptuous dev-util/ccache dev-build/cmake dev-build/ninja dev-vcs/git llvm-core/clang net-dns/c-ares[static-libs] net-libs/nghttp2 net-misc/curl[static-libs] net-nds/openldap[static-libs] sys-libs/zlib[static-libs] postgres? ( dev-db/postgresql[static-libs] ) redis? ( dev-db/redis dev-libs/hiredis[static-libs] ) mongodb? ( >=dev-db/mongodb-8.0.12 dev-libs/mongo-c-driver[static-libs] ) mysql? ( dev-db/mariadb ) rabbitmq? ( dev-cpp/amqp-cpp ) kafka? ( dev-libs/librdkafka ) sqlite? ( dev-db/sqlite ) utest? ( dev-cpp/gtest dev-cpp/benchmark ) odbc? ( dev-db/unixODBC[static-libs] ) sqlite? ( dev-db/sqlite )"
 
 DEPEND="${RDEPEND}"
 
@@ -152,6 +152,7 @@ src_unpack(){
 
 
 src_prepare() {
+	eapply "${FILESDIR}/userver-2.16-fixbuild.patch"
 	eapply_user
 }
 
