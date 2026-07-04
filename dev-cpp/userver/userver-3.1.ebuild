@@ -9,43 +9,43 @@ HOMEPAGE="https://github.com/userver-framework/userver"
 
 inherit pypi
 
-MAIN_SRC="v3.0.tar.gz"
+MAIN_SRC="v3.1.tar.gz"
 
 PYTHON_LIBS=(
-  "wheel 0.46.3"
-  "typing-extensions 4.15.0"
+  "wheel 0.47.0"
+  "typing-extensions 4.16.0"
   "sqlparse 0.5.5"
-  "redis 7.4.0"
-  "PyMySQL 1.1.2"
+  "redis 8.0.1"
+  "PyMySQL 1.2.0"
   "pygments 2.20.0"
-  "propcache 0.4.1"
+  "propcache 0.5.2"
   "pluggy 1.6.0"
-  "packaging 26.1"
+  "packaging 26.2"
   "multidict 6.7.1"
   "iniconfig 2.3.0"
-  "idna 3.11"
+  "idna 3.18"
   "frozenlist 1.8.0"
   "dnspython 2.8.0"
   "crc 7.1.0"
   "cached-property 2.0.1"
   "attrs 26.1.0"
   "async-timeout 5.0.1"
-  "aiohappyeyeballs 2.6.1"
-  "yarl 1.23.0"
-  "pytest 9.0.3"
+  "aiohappyeyeballs 2.7.1"
+  "yarl 1.24.2"
+  "pytest 9.1.1"
   "aiosignal 1.4.0"
-  "pytest-asyncio 1.3.0"
+  "pytest-asyncio 1.4.0"
   "aiormq 6.9.4"
-  "pytest-aiohttp 1.1.0"
+  "pytest-aiohttp 1.1.1"
   "aio-pika 9.6.2"
-  "yandex-taxi-testsuite 0.4.5"
+  "yandex-taxi-testsuite 0.4.7"
   "Jinja2 3.1.6"
-  "pydantic 2.13.3"
-# 2.12.5  
+  "pydantic 2.13.4"
   "setuptools 82.0.1"
   "annotated-types 0.7.0"
   "typing-inspection 0.4.2"
-  "Cython 3.2.4"
+  "Cython 3.2.8"
+  "python-redis 0.4.1"
 )
 
 PY2PY3_LIBS=(
@@ -57,22 +57,23 @@ PY2PY3_LIBS=(
 )
 
 MANYLINUX_PYTHON_LIBS=(
-  "pymongo 4.16.0"
+  "pymongo 4.17.0"
   "pyyaml 6.0.3"
-  "aiohttp 3.13.5"
-# "pydantic_core 2.41.5" (pypi bug; download url: https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl )
-# "pydantic_core 2.46.3" (pypi bug; download url: https://files.pythonhosted.org/packages/6c/35/68a762e0c1e31f35fa0dac733cbd9f5b118042853698de9509c8e5bf128b/pydantic_core-2.46.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl )
+  "aiohttp 3.14.1"
+# "pydantic_core 2.46.3" (no) (pypi bug; download url: https://files.pythonhosted.org/packages/6c/35/68a762e0c1e31f35fa0dac733cbd9f5b118042853698de9509c8e5bf128b/pydantic_core-2.46.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl )
+# "pydantic_core 2.46.4" (pypi bug; download url: https://files.pythonhosted.org/packages/07/f8/41db9de19d7987d6b04715a02b3b40aea467000275d9d758ffaa31af7d50/pydantic_core-2.46.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl )
+# "pydantic_core 2.47.0" (no) (pypi bug; download url: https://files.pythonhosted.org/packages/05/9f/b24bb1b764fc360adace5df806a81fd62ef1662df2973891e487c3fd5a2c/pydantic_core-2.47.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl )
   "MarkupSafe 3.0.3"
+# "psycopg2-binary 2.9.12" (pypi bug; download url: https://files.pythonhosted.org/packages/95/9c/eaa74021ac4e4d5c2f83d82fc6615a63f4fe6c94dc4e94c3990427053f67/psycopg2_binary-2.9.12-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl )
 )
 
 PYTHON_SDIST_LIBS=(
-  "psycopg2 2.9.11"
-  "python-redis 0.4.0"
-  "aiokafka 0.13.0"
+  "psycopg2 2.9.12"
+  "aiokafka 0.14.0"
   "yandex-pgmigrate 1.0.12"
 )
 
-SRC_URI="https://github.com/userver-framework/userver/archive/refs/tags/${MAIN_SRC} -> userver-framework-${MAIN_SRC} https://files.pythonhosted.org/packages/6c/35/68a762e0c1e31f35fa0dac733cbd9f5b118042853698de9509c8e5bf128b/pydantic_core-2.46.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl https://files.pythonhosted.org/packages/a1/6e/9a9d597dbdd6d0172427c8cc07c35736471e631060df9e59eeb87687f817/transliterate-1.10.2-py2.py3-none-any.whl"
+SRC_URI="https://github.com/userver-framework/userver/archive/refs/tags/${MAIN_SRC} -> userver-framework-${MAIN_SRC} https://files.pythonhosted.org/packages/07/f8/41db9de19d7987d6b04715a02b3b40aea467000275d9d758ffaa31af7d50/pydantic_core-2.46.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl https://files.pythonhosted.org/packages/a1/6e/9a9d597dbdd6d0172427c8cc07c35736471e631060df9e59eeb87687f817/transliterate-1.10.2-py2.py3-none-any.whl https://files.pythonhosted.org/packages/95/9c/eaa74021ac4e4d5c2f83d82fc6615a63f4fe6c94dc4e94c3990427053f67/psycopg2_binary-2.9.12-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
 
 for dep in "${PYTHON_LIBS[@]}"; do
 	set -- ${dep}
@@ -154,12 +155,11 @@ src_unpack(){
 
 
 src_prepare() {
-	eapply "${FILESDIR}/userver-3.0-fixchaotic.patch"
   eapply_user
 }
 
 src_configure() {
-	cmake -S${S}/ -B build_debug -DCMAKE_BUILD_TYPE=Debug -DUSERVER_INSTALL=ON -DUSERVER_SANITIZE="ub addr" -DUSERVER_DOWNLOAD_PACKAGES=OFF -DUSERVER_CHECK_PACKAGE_VERSIONS=OFF -DUSERVER_PIP_OPTIONS="--no-index;--find-links=${S}/third_party/wheelhouse" -DUSERVER_FEATURE_STACKTRACE=OFF -DUSERVER_FEATURE_CHAOTIC=ON -DUSERVER_FEATURE_GRPC=OFF -DUSERVER_FEATURE_GRPC_REFLECTION=OFF -DUSERVER_FEATURE_POSTGRESQL=$(usex postgres) -DUSERVER_FEATURE_REDIS=$(usex redis) -DUSERVER_FEATURE_REDIS_TLS=OFF -DUSERVER_FEATURE_MONGODB=$(usex mongodb) -DUSERVER_FEATURE_MYSQL=$(usex mysql) -DUSERVER_FEATURE_CLICKHOUSE=OFF -DUSERVER_FEATURE_RABBITMQ=$(usex rabbitmq) -DUSERVER_FEATURE_KAFKA=$(usex kafka) -DUSERVER_FEATURE_ROCKS=OFF -DUSERVER_FEATURE_OTLP=OFF -DUSERVER_FEATURE_S3API=OFF -DUSERVER_FEATURE_YDB=OFF -DUSERVER_FEATURE_UTEST=$(usex utest) -DUSERVER_FEATURE_TESTSUITE=$(usex testsuite) -DUSERVER_FEATURE_EASY=$(usex easy) -DUSERVER_FEATURE_ODBC=$(usex odbc) -DUSERVER_FEATURE_UBOOST_CORO=$(usex uboost-coro) -DUSERVER_FEATURE_SQLITE=$(usex sqlite) -GNinja || die "unable to configure release version"
+	cmake -S${S}/ -B build_debug -DCMAKE_BUILD_TYPE=Debug -DUSERVER_INSTALL=ON -DUSERVER_SANITIZE="ub addr" -DUSERVER_DOWNLOAD_PACKAGES=OFF -DUSERVER_CHECK_PACKAGE_VERSIONS=OFF -DUSERVER_PIP_OPTIONS="--no-index;--find-links=${S}/third_party/wheelhouse" -DUSERVER_FEATURE_STACKTRACE=OFF -DUSERVER_FEATURE_CHAOTIC=ON -DUSERVER_FEATURE_GRPC=OFF -DUSERVER_FEATURE_GRPC_REFLECTION=OFF -DUSERVER_FEATURE_POSTGRESQL=$(usex postgres) -DUSERVER_FEATURE_REDIS=$(usex redis) -DUSERVER_FEATURE_REDIS_TLS=OFF -DUSERVER_FEATURE_MONGODB=$(usex mongodb) -DUSERVER_FEATURE_MYSQL=$(usex mysql) -DUSERVER_FEATURE_CLICKHOUSE=OFF -DUSERVER_FEATURE_RABBITMQ=$(usex rabbitmq) -DUSERVER_FEATURE_KAFKA=$(usex kafka) -DUSERVER_FEATURE_ROCKS=OFF -DUSERVER_FEATURE_OTLP=OFF -DUSERVER_FEATURE_S3API=OFF -DUSERVER_FEATURE_YDB=OFF -DUSERVER_FEATURE_UTEST=$(usex utest) -DUSERVER_FEATURE_TESTSUITE=$(usex testsuite) -DUSERVER_FEATURE_EASY=$(usex easy) -DUSERVER_FEATURE_ODBC=$(usex odbc) -DUSERVER_FEATURE_UBOOST_CORO=$(usex uboost-coro) -DUSERVER_FEATURE_SQLITE=$(usex sqlite) -GNinja || die "unable to configure debug version"
 
 	cmake -S${S}/ -B build_release -DCMAKE_BUILD_TYPE=Release -DUSERVER_INSTALL=ON -DUSERVER_SANITIZE="" -DUSERVER_DOWNLOAD_PACKAGES=OFF -DUSERVER_CHECK_PACKAGE_VERSIONS=OFF -DUSERVER_PIP_OPTIONS="--no-index;--find-links=${S}/third_party/wheelhouse" -DUSERVER_FEATURE_STACKTRACE=OFF -DUSERVER_FEATURE_CHAOTIC=ON -DUSERVER_FEATURE_GRPC=OFF -DUSERVER_FEATURE_GRPC_REFLECTION=OFF -DUSERVER_FEATURE_POSTGRESQL=$(usex postgres) -DUSERVER_FEATURE_REDIS=$(usex redis) -DUSERVER_FEATURE_REDIS_TLS=OFF -DUSERVER_FEATURE_MONGODB=$(usex mongodb) -DUSERVER_FEATURE_MYSQL=$(usex mysql) -DUSERVER_FEATURE_CLICKHOUSE=OFF -DUSERVER_FEATURE_RABBITMQ=$(usex rabbitmq) -DUSERVER_FEATURE_KAFKA=$(usex kafka) -DUSERVER_FEATURE_ROCKS=OFF -DUSERVER_FEATURE_OTLP=OFF -DUSERVER_FEATURE_S3API=OFF -DUSERVER_FEATURE_YDB=OFF -DUSERVER_FEATURE_UTEST=$(usex utest) -DUSERVER_FEATURE_TESTSUITE=$(usex testsuite) -DUSERVER_FEATURE_EASY=$(usex easy) -DUSERVER_FEATURE_ODBC=$(usex odbc) -DUSERVER_FEATURE_UBOOST_CORO=$(usex uboost-coro) -DUSERVER_FEATURE_SQLITE=$(usex sqlite) -GNinja || die "unable to configure release version"
 }

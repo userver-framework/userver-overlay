@@ -9,9 +9,9 @@ DESCRIPTION="The service to control dynamic configs of other userver-based servi
 
 HOMEPAGE="https://github.com/userver-framework/uservice-dynconf"
 
-MAIN_SRC="uservice-dynconf-2.13.tar.gz"
+MAIN_SRC="uservice-dynconf-2.15.tar.gz"
 
-SRC_URI="https://github.com/userver-framework/uservice-dynconf/archive/refs/tags/v2.13.tar.gz -> ${MAIN_SRC}"
+SRC_URI="https://github.com/userver-framework/uservice-dynconf/archive/refs/tags/v2.15.tar.gz -> ${MAIN_SRC}"
 
 PYTHON_LIBS=(
     "aio-pika 9.6.1"
