@@ -121,8 +121,10 @@ jobs:
             echo "LLVM_SLOT=\"21\"" >> /etc/portage/env/postgresql
             echo "PYTHON_SINGLE_TARGET=\"python3_13\"" >> /etc/portage/env/postgresql
             echo "dev-db/postgresql postgresql" > /etc/portage/package.env/postgresql
-
-          '
+            
+            # python
+            echo 'PYTHON_TARGETS="python3_13"' >> /etc/portage/make.conf
+            echo 'PYTHON_SINGLE_TARGET="python3_13"' >> /etc/portage/make.conf
 
       # ---------- Install base tools and sync userver overlay ----------
       - name: Install base tools and sync userver overlay
